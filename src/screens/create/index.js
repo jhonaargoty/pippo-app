@@ -1,40 +1,75 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, FlatList, ActivityIndicator } from 'react-native';
-import { Text, Divider } from '@rneui/themed';
-import { Icon } from 'react-native-elements';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import React, { useState, useEffect } from "react";
+import { StyleSheet, View, FlatList, ActivityIndicator } from "react-native";
+import { Text, Divider } from "@rneui/themed";
+import { Icon } from "react-native-elements";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-import { keyExtractor, renderItem } from '../../utils';
-import { useMyContext } from '../../../context';
+import { keyExtractor, renderItem } from "../../utils";
+import { useMyContext } from "../../../context";
 
-import moment from 'moment';
-import 'moment/locale/es';
+import moment from "moment";
+import "moment/locale/es";
 
 const Index = ({ navigation, route }) => {
-  const { listGanaderos, listRecolecciones, rutaActual } = useMyContext();
+  const {
+    listGanaderos,
+    rutaActual,
+    listRecoleccionesLOCAL,
+    listConductores,
+    listRutas,
+  } = useMyContext();
   const [ganaderosByRuta, setGanaderosByRuta] = useState([]);
   const [loading, setLoading] = useState(true);
-  moment.locale('es');
-  const formattedDateTime = moment().format('dddd D [de] MMMM : HH:mm');
+  moment.locale("es");
+  const formattedDateTime = moment().format("dddd D [de] MMMM : HH:mm");
 
   useEffect(() => {
     setLoading(true);
     setGanaderosByRuta(
-      listGanaderos?.filter((gl) => gl.ruta === rutaActual?.id),
+      listGanaderos?.filter((gl) => gl.ruta === rutaActual?.id)
     );
     setLoading(false);
   }, [listGanaderos, rutaActual]);
 
+  const [recolecciones, setRecolecciones] = useState([]);
+
+  useEffect(() => {
+    let newData = [];
+
+    listRecoleccionesLOCAL?.forEach((item) => {
+      let newItem = { ...item };
+
+      newItem.conductor = listConductores.find(
+        (c) => c.id === item.conductor
+      ).nombre;
+      newItem.ganadero_documento = listGanaderos.find(
+        (c) => c.id === item.ganadero
+      ).documento;
+      newItem.ganadero = listGanaderos.find(
+        (c) => c.id === item.ganadero
+      ).nombre;
+      newItem.ganadero_id = listGanaderos.find(
+        (c) => c.id === item.ganadero
+      ).id;
+      newItem.ruta = listRutas.find((r) => r.id === item.ruta).nombre;
+
+      newItem.conductor_id = item.conductor;
+      newData.push(newItem);
+
+      setRecolecciones((recolecciones) => [...recolecciones, ...newData]);
+    });
+  }, []);
+
   const existRecolet = (item) => {
-    return !!listRecolecciones?.find((r) => r.ganadero_id === item.id);
+    return !!recolecciones?.find((r) => r?.ganadero_id === item.id);
   };
 
   const onPressItem = (item) => {
     const data = existRecolet(item)
-      ? listRecolecciones.find((lr) => lr.ganadero_id === item?.id)
+      ? recolecciones?.find((r) => r?.ganadero_id === item.id)
       : item;
 
-    const destination = existRecolet(item) ? 'Print' : 'Form';
+    const destination = existRecolet(item) ? "Print" : "Form";
     navigation.navigate(destination, { propData: data });
   };
 
@@ -76,8 +111,8 @@ const Index = ({ navigation, route }) => {
                 renderItem({
                   item,
                   icon: existRecolet(item) && {
-                    name: 'check-circle',
-                    color: 'green',
+                    name: "check-circle",
+                    color: "green",
                   },
                   onPress: () => {
                     onPressItem(item);
@@ -100,44 +135,44 @@ const Index = ({ navigation, route }) => {
 };
 
 const styles = StyleSheet.create({
-  loading: { flex: 1, justifyContent: 'center' },
+  loading: { flex: 1, justifyContent: "center" },
   no_data_text: {
-    justifyContent: 'center',
-    alignContent: 'center',
-    textAlign: 'center',
+    justifyContent: "center",
+    alignContent: "center",
+    textAlign: "center",
   },
   no_data: {
     flex: 1,
-    justifyContent: 'center',
-    alignContent: 'center',
-    textAlign: 'center',
-    width: '100%',
+    justifyContent: "center",
+    alignContent: "center",
+    textAlign: "center",
+    width: "100%",
   },
-  list: { borderRadius: 10, padding: 10, backgroundColor: 'white', flex: 1 },
-  date: { textTransform: 'capitalize' },
+  list: { borderRadius: 10, padding: 10, backgroundColor: "white", flex: 1 },
+  date: { textTransform: "capitalize" },
   container: {
     flex: 1,
     padding: 20,
     gap: 20,
-    height: '100%',
+    height: "100%",
   },
   info: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 10,
   },
   info_navigation: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     /* marginRight: 50, */
   },
   info_main: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 5,
-    width: '100%',
+    width: "100%",
     flex: 1,
   },
-  info_ruta: { textTransform: 'capitalize' },
+  info_ruta: { textTransform: "capitalize" },
 });
 
 export default Index;

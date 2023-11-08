@@ -21,23 +21,30 @@ const Index = ({ navigation }) => {
   const {
     listGanaderos,
     listRutas,
-    listRecolecciones,
     user,
     setRutaActual,
     rutaActual,
+    setListRecoleccionesLOCAL,
+    listRecoleccionesLOCAL,
+    listConductores,
+    crearRecoleccion,
+    isConnected,
+    rutaActiva,
   } = useMyContext();
 
-  const formattedDateTime = moment().format("dddd D [de] MMMM : HH:mm");
+  const formattedDate = moment().format("dddd D [de] MMMM");
+  const formattedTime = moment().format("HH:mm");
 
   const [toggleOverlay, setToggleOverlay] = useState(false);
   const [percentage, setPercentage] = useState(0);
+  const [finalizarRuta, setFinalizarRuta] = useState(false);
 
   function getPercent() {
     const totalElements = listGanaderos?.filter(
       (g) => g.ruta === rutaActual?.id
     )?.length;
 
-    const selectedElements = listRecolecciones?.length;
+    const selectedElements = listRecoleccionesLOCAL?.length;
     const percentageSelected = Math.round(
       (selectedElements / totalElements) * 100
     );
@@ -47,10 +54,10 @@ const Index = ({ navigation }) => {
   }
 
   useEffect(() => {
-    if (rutaActual && listRecolecciones && listGanaderos) {
+    if (rutaActual && listRecoleccionesLOCAL && listGanaderos) {
       getPercent();
     }
-  }, [rutaActual, listGanaderos, listRecolecciones]);
+  }, [rutaActual, listGanaderos, listRecoleccionesLOCAL]);
 
   const getColorPercent = () => {
     let calc = "";
@@ -74,14 +81,16 @@ const Index = ({ navigation }) => {
     removeData("user");
     navigation.navigate("Login");
   };
-  const borrarData = () => {
-    removeData("user");
-    removeData("ganaderos");
-    removeData("conductores");
-    removeData("rutas");
-    removeData("routeSelected");
-    removeData("recoleccione");
-    navigation.navigate("Login");
+  const borrarData = async () => {
+    await removeData("user");
+    await removeData("listConductores");
+    await removeData("listGanaderos");
+    await removeData("listRutas");
+    await removeData("routeSelected");
+    await removeData("listRecoleccionesLOCAL");
+    await removeData("rutaActiva");
+
+    setListRecoleccionesLOCAL([]);
   };
 
   return (
@@ -106,7 +115,10 @@ const Index = ({ navigation }) => {
               </View>
             </View>
             <View style={styles.date_placas}>
-              <Text style={styles.date}>{formattedDateTime}</Text>
+              <View style={styles.date_time}>
+                <Text style={styles.date}>{formattedDate}</Text>
+                <Text style={styles.date}>{formattedTime}</Text>
+              </View>
               <View style={styles.placas_main}>
                 <Text style={styles.placas}>{user?.placa}</Text>
               </View>
@@ -115,14 +127,14 @@ const Index = ({ navigation }) => {
         </ImageBackground>
       </View>
 
-      <Button
+      {/*    <Button
         title={"borrar"}
         icon={<IconF name="route" color="white" size={20} />}
         buttonStyle={styles.button}
         onPress={() => {
           borrarData();
         }}
-      />
+      /> */}
 
       <View style={styles.buttons}>
         <View style={styles.buttons_m}>
@@ -139,6 +151,7 @@ const Index = ({ navigation }) => {
             icon={<IconF name="plus-circle" color="white" size={20} />}
             buttonStyle={styles.button}
             onPress={() => navigation.navigate("Create")}
+            disabled={!rutaActiva}
           />
         </View>
       </View>
@@ -201,21 +214,24 @@ const Index = ({ navigation }) => {
             margin: 0,
             flex: 1,
             paddingBottom: 80,
+            marginBottom: 20,
           }}
         >
           <Card.Title>Ultimas recolecciones</Card.Title>
           <Card.Divider />
 
-          {listRecolecciones?.length ? (
+          {listRecoleccionesLOCAL?.length ? (
             <FlatList
               style={{ height: "auto" }}
               keyExtractor={keyExtractor}
-              data={listRecolecciones?.map((item) => {
+              data={listRecoleccionesLOCAL?.map((item) => {
                 return {
                   ...item,
                   id: item.id,
-                  name: item.ganadero,
-                  subtitle: item.fecha,
+                  name: listGanaderos?.find(
+                    (c) => c.id === item.ganadero || c.id === item.ganadero_id
+                  )?.nombre,
+                  subtitle: item?.fecha,
                   subtitleStyle: styles.subtitle,
                   nameStyle: styles.last_title_name,
                 };
@@ -224,7 +240,25 @@ const Index = ({ navigation }) => {
                 renderItem({
                   item,
                   onPress: () =>
-                    navigation.navigate("Print", { propData: item }),
+                    navigation.navigate("Print", {
+                      propData: {
+                        litros: item.litros,
+                        observaciones: item.observaciones,
+                        fecha: item.fecha,
+                        ganadero: listGanaderos.find(
+                          (g) => g.id === item.ganadero
+                        ).nombre,
+                        conductor: listConductores.find(
+                          (g) => g.id === user?.id
+                        ).nombre,
+                        ruta: listRutas.find((r) => r.id === rutaActual.id)
+                          .nombre,
+                        conductor_id: user?.id,
+                        ganadero_documento: listGanaderos.find(
+                          (g) => g.id === item.ganadero
+                        ).documento,
+                      },
+                    }),
                 })
               }
             />
@@ -235,6 +269,50 @@ const Index = ({ navigation }) => {
             </View>
           )}
         </Card>
+
+        <Button
+          title={"Finalizar ruta"}
+          icon={<IconF name="route" color="white" size={20} />}
+          buttonStyle={styles.button}
+          onPress={() => {
+            setFinalizarRuta(true);
+          }}
+          disabled={
+            !listRecoleccionesLOCAL?.length || !isConnected || !rutaActiva
+          }
+        />
+
+        <Overlay isVisible={finalizarRuta} overlayStyle={styles.overlay_finish}>
+          <View style={styles.title_overlay_finish}>
+            <Text style={styles.overlay_text_finish}>
+              {"¿Desea terminar la ruta?"}
+            </Text>
+          </View>
+          <View style={styles.overlay_f_b}>
+            <Button
+              title={"Cancelar"}
+              buttonStyle={{
+                backgroundColor: "rgba(214, 61, 57, 1)",
+                borderRadius: 20,
+                paddingHorizontal: 30,
+              }}
+              onPress={() => {
+                setFinalizarRuta(false);
+              }}
+            />
+            <Button
+              title={"Aceptar"}
+              buttonStyle={{
+                borderRadius: 20,
+                paddingHorizontal: 30,
+              }}
+              onPress={() => {
+                setFinalizarRuta(false);
+                crearRecoleccion();
+              }}
+            />
+          </View>
+        </Overlay>
 
         <Overlay isVisible={toggleOverlay} overlayStyle={styles.overlay}>
           <View style={styles.title_overlay}>
@@ -276,6 +354,22 @@ const Index = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
+  title_overlay_finish: {
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  overlay_text_finish: { fontSize: 18 },
+  overlay_f_b: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 10,
+  },
+  overlay_finish: {
+    padding: 30,
+    flexDirection: "column",
+    justifyContent: "space-between",
+    gap: 50,
+  },
   last_title_name: { fontSize: 14 },
   name_style: { textTransform: "capitalize" },
   not_data: {

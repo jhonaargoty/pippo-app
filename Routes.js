@@ -9,7 +9,6 @@ import Home from "./src/screens/home";
 import Create from "./src/screens/create";
 import Form from "./src/screens/create/form";
 import Print from "./src/screens/print";
-import Imprimir from "./src/screens/imprimir";
 
 const Stack = createNativeStackNavigator();
 
@@ -41,11 +40,6 @@ function App() {
           <Stack.Screen
             name="Print"
             component={Print}
-            options={optionsScreens}
-          />
-          <Stack.Screen
-            name="Imprimir"
-            component={Imprimir}
             options={optionsScreens}
           />
         </Stack.Navigator>

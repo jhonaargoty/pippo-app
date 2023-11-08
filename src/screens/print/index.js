@@ -9,6 +9,8 @@ import {
   ToastAndroid,
   ActivityIndicator,
 } from "react-native";
+import { BackHandler } from "react-native";
+import { useFocusEffect } from "@react-navigation/native";
 import { Text, Divider, Button, Overlay } from "@rneui/themed";
 import { Icon } from "react-native-elements";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -26,6 +28,21 @@ import {
 import ItemList from "./ItemList";
 
 const Index = ({ navigation, route }) => {
+  useFocusEffect(
+    React.useCallback(() => {
+      const onBackPress = () => {
+        navigation.navigate("Home");
+
+        return true;
+      };
+
+      BackHandler.addEventListener("hardwareBackPress", onBackPress);
+
+      return () =>
+        BackHandler.removeEventListener("hardwareBackPress", onBackPress);
+    }, [])
+  );
+
   const { listConductores } = useMyContext();
   const { propData } = route.params;
 
@@ -321,30 +338,11 @@ const Index = ({ navigation, route }) => {
   };
 
   async function printreciept() {
-    const x = {
-      conductor: "Adrian",
-      conductor_id: "5",
-      fecha: "2023-10-24",
-      ganadero: "Jose Wilmer Garzon Portuguez",
-      ganadero_documento: "10693024272",
-      ganadero_id: "22",
-      id: undefined,
-      litros: "20",
-      name: "Jose Wilmer Garzon Portuguez",
-      nameStyle: { fontSize: 14 },
-      observaciones: "X",
-      precio: "100",
-      recoleccion_id: "49",
-      ruta: "porvenir",
-      subtitle: "2023-10-24",
-      subtitleStyle: { color: "#c90000", fontSize: 12 },
-    };
-
     try {
       await BluetoothEscposPrinter.printerAlign(
         BluetoothEscposPrinter.ALIGN.CENTER
       );
-      await BluetoothEscposPrinter.printText(" Alimentos Pippo SAS", {
+      await BluetoothEscposPrinter.printText("Alimentos Pippo SAS", {
         align: "center",
       });
       await BluetoothEscposPrinter.printText("\r\n", {});
@@ -417,6 +415,17 @@ const Index = ({ navigation, route }) => {
     }
   }
 
+  console.log("propData", propData);
+
+  const x = {
+    conductor: "5",
+    fecha: "2023-11-03",
+    ganadero: "22",
+    litros: "1",
+    observaciones: "10",
+    ruta: "1",
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.info_navigation}>
@@ -460,7 +469,7 @@ const Index = ({ navigation, route }) => {
             <View style={styles.item}>
               <Text style={styles.item_imp}>Litros</Text>
               <Text style={styles.item_imp_desc}>
-                {propData?.litros || "10"}
+                {propData?.litros || "-"}
               </Text>
             </View>
             <View style={styles.item}>
