@@ -1,14 +1,14 @@
 export const ganaderosLOCAL = [
   {
     id: "22",
-    nombre: "Jose Wilmer Garzon PortuguezLOCAL",
+    nombre: "Jose Wilmer Garzon Portuguez",
     documento: 10693024272,
     ruta: "1",
     promedio: 11,
   },
   {
     id: "23",
-    nombre: "Maria LOCAL Johana Rodriguez Rodrigu",
+    nombre: "Maria Johana Rodriguez Rodrigu",
     documento: 20645971,
     ruta: "1",
     promedio: 12,
@@ -123,6 +123,13 @@ export const ganaderosLOCAL = [
     nombre: "Diana Patricia Ramos Gantiva",
     documento: 52848779,
     ruta: "1",
+    promedio: 28,
+  },
+  {
+    id: "40",
+    nombre: "Diana Patricia Ramos Gantiva",
+    documento: 52848779,
+    ruta: "2",
     promedio: 28,
   },
 ];

@@ -127,7 +127,7 @@ const Index = ({ navigation }) => {
         </ImageBackground>
       </View>
 
-      {/*    <Button
+      {/*   <Button
         title={"borrar"}
         icon={<IconF name="route" color="white" size={20} />}
         buttonStyle={styles.button}

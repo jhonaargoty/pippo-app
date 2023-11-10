@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import axios from "axios";
 import NetInfo from "@react-native-community/netinfo";
-import { getData, saveData } from "./src/utils";
+import { getData, removeData, saveData } from "./src/utils";
 import moment from "moment-timezone";
 import { BASE_URL } from "./src/constants";
 import { conductoresLOCAL, ganaderosLOCAL, rutasLOCAL } from "./src/utils/data";
@@ -29,21 +29,28 @@ const MyContextProvider = ({ children }) => {
 
   console.log("currentDate", currentDate);
   console.log("rutaActiva", rutaActiva);
+  console.log("rutaActual", rutaActual);
+  console.log("listGanaderos", listGanaderos);
+
+  /*  2023-11-09T01:35:01.894Z
+  8 de noviembre de 2023 20:37 */
 
   useEffect(() => {
     const interval = setInterval(() => {
       const now = moment().tz("America/Bogota");
 
-      console.log("now", now.format("LLL"));
+      console.log("now", now);
       if (!now.isSame(currentDate, "day")) {
         setCurrentDate(now);
         setRutaActiva(true);
         saveData("rutaActiva", "true");
+        setListRecoleccionesLOCAL([]);
+        removeData("listRecoleccionesLOCAL");
         console.log("¡Cambiaste de día!");
       } else {
         console.log("¡No cambiaste de día!");
       }
-    }, 5000);
+    }, 60000);
 
     return () => clearInterval(interval);
   }, [currentDate]);

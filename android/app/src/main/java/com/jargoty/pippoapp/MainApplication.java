@@ -1,5 +1,5 @@
 package com.jargoty.pippoapp;
-import cn.jystudio.bluetooth.RNBluetoothEscposPrinterPackage;
+
 import android.app.Application;
 import android.content.res.Configuration;
 import androidx.annotation.NonNull;
