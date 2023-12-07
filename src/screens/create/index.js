@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { StyleSheet, View, FlatList, ActivityIndicator } from "react-native";
+import {
+  StyleSheet,
+  View,
+  FlatList,
+  ActivityIndicator,
+  TextInput,
+} from "react-native";
 import { Text, Divider } from "@rneui/themed";
 import { Icon } from "react-native-elements";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -73,6 +79,21 @@ const Index = ({ navigation, route }) => {
     navigation.navigate(destination, { propData: data });
   };
 
+  const [ganaderosByRutaFilter, setGanaderosByRutaFilter] =
+    useState(ganaderosByRuta);
+
+  useEffect(() => {
+    setGanaderosByRutaFilter(ganaderosByRuta);
+  }, [ganaderosByRuta]);
+
+  const search = (item) => {
+    const newData = ganaderosByRuta?.filter((gl) =>
+      gl.nombre.includes(item.toUpperCase())
+    );
+
+    setGanaderosByRutaFilter(newData);
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.info_navigation}>
@@ -98,10 +119,17 @@ const Index = ({ navigation, route }) => {
       ) : ganaderosByRuta?.length ? (
         <>
           <Text h4>Seleccione ganadero</Text>
+          <View>
+            <TextInput
+              style={styles.input}
+              onChangeText={(e) => search(e)}
+              placeholder="Buscar..."
+            />
+          </View>
           <View style={styles.list}>
             <FlatList
               keyExtractor={keyExtractor}
-              data={ganaderosByRuta?.map((item) => {
+              data={ganaderosByRutaFilter?.map((item) => {
                 return {
                   ...item,
                   name: item.nombre,
@@ -135,6 +163,12 @@ const Index = ({ navigation, route }) => {
 };
 
 const styles = StyleSheet.create({
+  input: {
+    backgroundColor: "#e6e6e6",
+    borderRadius: 20,
+    padding: 5,
+    paddingHorizontal: 20,
+  },
   loading: { flex: 1, justifyContent: "center" },
   no_data_text: {
     justifyContent: "center",

@@ -1,9 +1,16 @@
 import React, { useState, useEffect } from "react";
 
-import { StyleSheet, View, FlatList, ImageBackground } from "react-native";
+import {
+  StyleSheet,
+  View,
+  FlatList,
+  ImageBackground,
+  Image,
+} from "react-native";
 import { Button, Text, Card, Slider, Overlay, Divider } from "@rneui/themed";
 import IconF from "react-native-vector-icons/FontAwesome5";
 import IconF1 from "react-native-vector-icons/FontAwesome";
+import MC from "react-native-vector-icons/MaterialCommunityIcons";
 import { Icon } from "react-native-elements";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -14,6 +21,8 @@ import { keyExtractor, renderItem, saveData, removeData } from "../../utils";
 import moment from "moment";
 import "moment/locale/es";
 import image from "../../assets/background.png";
+
+import { imprimirVoucherDia } from "./voucherDia";
 
 const Index = ({ navigation }) => {
   moment.locale("es");
@@ -33,11 +42,13 @@ const Index = ({ navigation }) => {
   } = useMyContext();
 
   const formattedDate = moment().format("dddd D [de] MMMM");
+  const formattedDate2 = moment().format("DD/MM/YYYY");
   const formattedTime = moment().format("HH:mm");
 
   const [toggleOverlay, setToggleOverlay] = useState(false);
   const [percentage, setPercentage] = useState(0);
   const [finalizarRuta, setFinalizarRuta] = useState(false);
+  const [voucherDia, setVoucherDia] = useState(false);
 
   function getPercent() {
     const totalElements = listGanaderos?.filter(
@@ -89,8 +100,8 @@ const Index = ({ navigation }) => {
     await removeData("routeSelected");
     await removeData("listRecoleccionesLOCAL");
     await removeData("rutaActiva");
-
-    setListRecoleccionesLOCAL([]);
+    /* 
+    setListRecoleccionesLOCAL([]); */
   };
 
   return (
@@ -102,6 +113,16 @@ const Index = ({ navigation }) => {
               <View>
                 <Text h3>Hola,</Text>
                 <Text h4>{user?.nombre}</Text>
+              </View>
+              <View style={styles.info_icon_logos}>
+                <Image
+                  style={styles.logo}
+                  source={require("../../assets/lola.png")}
+                />
+                <Image
+                  style={styles.logo_pippo}
+                  source={require("../../assets/logo_pipo.png")}
+                />
               </View>
               <View style={styles.info_icon}>
                 <IconF
@@ -127,14 +148,14 @@ const Index = ({ navigation }) => {
         </ImageBackground>
       </View>
 
-      {/*   <Button
+      <Button
         title={"borrar"}
         icon={<IconF name="route" color="white" size={20} />}
         buttonStyle={styles.button}
         onPress={() => {
           borrarData();
         }}
-      /> */}
+      />
 
       <View style={styles.buttons}>
         <View style={styles.buttons_m}>
@@ -220,6 +241,8 @@ const Index = ({ navigation }) => {
           <Card.Title>Ultimas recolecciones</Card.Title>
           <Card.Divider />
 
+          {console.log("listRecoleccionesLOCAL--", listRecoleccionesLOCAL)}
+
           {listRecoleccionesLOCAL?.length ? (
             <FlatList
               style={{ height: "auto" }}
@@ -229,7 +252,9 @@ const Index = ({ navigation }) => {
                   ...item,
                   id: item.id,
                   name: listGanaderos?.find(
-                    (c) => c.id === item.ganadero || c.id === item.ganadero_id
+                    (c) =>
+                      parseInt(c.id) === parseInt(item.ganadero) ||
+                      parseInt(c.id) === parseInt(item.ganadero_id)
                   )?.nombre,
                   subtitle: item?.fecha,
                   subtitleStyle: styles.subtitle,
@@ -270,18 +295,65 @@ const Index = ({ navigation }) => {
           )}
         </Card>
 
-        <Button
-          title={"Finalizar ruta"}
-          icon={<IconF name="route" color="white" size={20} />}
-          buttonStyle={styles.button}
-          onPress={() => {
-            setFinalizarRuta(true);
-          }}
-          disabled={
-            !listRecoleccionesLOCAL?.length || !isConnected || !rutaActiva
-          }
-        />
+        <View style={styles.buttons_footer}>
+          <Button
+            title={"Voucher dia"}
+            icon={<IconF name="print" color="white" size={20} />}
+            buttonStyle={styles.button}
+            onPress={() => {
+              setVoucherDia(true);
+            }}
+            disabled={!listRecoleccionesLOCAL?.length}
+          />
+          <Button
+            title={"Finalizar ruta"}
+            icon={<IconF name="route" color="white" size={20} />}
+            buttonStyle={styles.button_fin}
+            onPress={() => {
+              setFinalizarRuta(true);
+            }}
+            disabled={
+              !listRecoleccionesLOCAL?.length || !isConnected || !rutaActiva
+            }
+          />
+        </View>
 
+        <Overlay isVisible={voucherDia} overlayStyle={styles.overlay_finish}>
+          <View style={styles.title_overlay_finish}>
+            <Text style={styles.overlay_text_finish}>
+              {`¿Imprimir las ${listRecoleccionesLOCAL?.length} recolecciones del dia?`}
+            </Text>
+          </View>
+          <View style={styles.overlay_f_b}>
+            <Button
+              title={"Cancelar"}
+              buttonStyle={{
+                backgroundColor: "rgba(214, 61, 57, 1)",
+                borderRadius: 20,
+                paddingHorizontal: 30,
+              }}
+              onPress={() => {
+                setVoucherDia(false);
+              }}
+            />
+            <Button
+              title={"Aceptar"}
+              buttonStyle={{
+                borderRadius: 20,
+                paddingHorizontal: 30,
+              }}
+              onPress={() => {
+                setVoucherDia(false);
+                imprimirVoucherDia({
+                  lista: listRecoleccionesLOCAL,
+                  user: user,
+                  fecha: formattedDate2,
+                  ganaderos: listGanaderos,
+                });
+              }}
+            />
+          </View>
+        </Overlay>
         <Overlay isVisible={finalizarRuta} overlayStyle={styles.overlay_finish}>
           <View style={styles.title_overlay_finish}>
             <Text style={styles.overlay_text_finish}>
@@ -354,6 +426,20 @@ const Index = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
+  button_fin: {
+    backgroundColor: "#c90000",
+    borderRadius: 20,
+    gap: 10,
+    paddingHorizontal: 40,
+  },
+  buttons_footer: {
+    flexDirection: "row",
+    gap: 10,
+    justifyContent: "space-between",
+  },
+  info_icon_logos: { flexDirection: "row", gap: 10, alignItems: "center" },
+  logo_pippo: { width: 70, height: 50 },
+  logo: { width: 60, height: 60 },
   title_overlay_finish: {
     justifyContent: "center",
     alignItems: "center",

@@ -5,7 +5,12 @@ import NetInfo from "@react-native-community/netinfo";
 import { getData, removeData, saveData } from "./src/utils";
 import moment from "moment-timezone";
 import { BASE_URL } from "./src/constants";
-import { conductoresLOCAL, ganaderosLOCAL, rutasLOCAL } from "./src/utils/data";
+import SQLite from "react-native-sqlite-storage";
+import {
+  fetchSaveGanaderos,
+  fetchGetGanaderos,
+  fectGetRecolecciones,
+} from "./context_const";
 
 const MyContext = createContext();
 
@@ -24,22 +29,18 @@ const MyContextProvider = ({ children }) => {
   const [isConnected, setIsConnected] = useState(null);
   const [currentDate, setCurrentDate] = useState(moment().tz("America/Bogota"));
   const [rutaActiva, setRutaActiva] = useState(
-    getData("rutaActiva") === "false" ? false : true
+    /* getData("rutaActiva") === "false" ? false : */ true
   );
 
-  console.log("currentDate", currentDate);
-  console.log("rutaActiva", rutaActiva);
-  console.log("rutaActual", rutaActual);
-  console.log("listGanaderos", listGanaderos);
+  let db = SQLite.openDatabase({
+    name: "pippo.db",
+    location: "default",
+  });
 
-  /*  2023-11-09T01:35:01.894Z
-  8 de noviembre de 2023 20:37 */
-
-  useEffect(() => {
+  /* useEffect(() => {
     const interval = setInterval(() => {
       const now = moment().tz("America/Bogota");
 
-      console.log("now", now);
       if (!now.isSame(currentDate, "day")) {
         setCurrentDate(now);
         setRutaActiva(true);
@@ -53,7 +54,7 @@ const MyContextProvider = ({ children }) => {
     }, 60000);
 
     return () => clearInterval(interval);
-  }, [currentDate]);
+  }, [currentDate]); */
 
   const verifyConnection = () => {
     NetInfo.addEventListener((state) => {
@@ -67,41 +68,60 @@ const MyContextProvider = ({ children }) => {
         `${BASE_URL}/conductores/getListConductores.php`
       );
       setListConductores(conductoresResponse.data);
-      saveData("listConductores", conductoresResponse?.data);
+      /*    saveData("listConductores", conductoresResponse?.data); */
 
       const ganaderosResponse = await axios.get(
         `${BASE_URL}/ganaderos/getListGanaderos.php`
       );
+      await fetchSaveGanaderos(ganaderosResponse.data);
       setListGanaderos(ganaderosResponse.data);
-      saveData("listGanaderos", ganaderosResponse?.data);
 
       const rutasResponse = await axios.get(
         `${BASE_URL}/rutas/getListRutas.php`
       );
       setListRutas(rutasResponse.data);
-      saveData("listRutas", rutasResponse?.data);
+      /*  saveData("listRutas", rutasResponse?.data); */
     } catch (error) {
       console.error("Error en las solicitudes:", error);
     }
   };
 
-  useEffect(() => {
+  /* useEffect(() => {
     if (listRutas.length && user) {
       const rs = listRutas.find((r) => r.id === user?.ruta);
       setRutaActual(rs);
       saveData("routeSelected", rs);
     }
-  }, [user, listRutas]);
+  }, [user, listRutas]); */
 
   useEffect(() => {
     verifyConnection();
   }, []);
 
   useEffect(() => {
-    const loadUser = async () => {
-      setUser(await getData("user"));
+    const checkLogin = () => {
+      db.transaction((tx) => {
+        tx.executeSql(
+          "SELECT * FROM session;",
+          [],
+          (tx, results) => {
+            let len = results.rows.length;
+            if (len > 0) {
+              let row = results.rows.item(0);
+              console.log(`User ${row?.nombre} is logged in`);
+              setUser(row);
+            } else {
+              console.log("No user is logged in");
+            }
+          },
+          (error) => {
+            console.log(error.message);
+          }
+        );
+      });
     };
-    loadUser();
+
+    checkLogin();
   }, [isConnected]);
 
   useEffect(() => {
@@ -110,49 +130,24 @@ const MyContextProvider = ({ children }) => {
         fetchData();
       } else {
         const loadData = async () => {
-          const conductoresStore = await getData("listConductores");
+          /*  const conductoresStore = await getData("listConductores");
+          setListConductores(conductoresStore); */
 
-          if (conductoresStore) {
-            setListConductores(conductoresStore);
-          } else {
-            setListConductores(conductoresLOCAL);
-          }
+          await fetchGetGanaderos(setListGanaderos);
 
-          const ganaderosStore = await getData("listGanaderos");
-
-          if (ganaderosStore) {
-            setListGanaderos(ganaderosStore);
-          } else {
-            setListGanaderos(ganaderosLOCAL);
-          }
+          /* const ganaderosStore = await getData("listGanaderos");
+          setListGanaderos(ganaderosStore); */
 
           const rutasStore = await getData("listRutas");
-
-          if (rutasStore) {
-            setListRutas(rutasStore);
-          } else {
-            setListRutas(rutasLOCAL);
-          }
-
-          const recoleccionesLOCALStore = await getData(
-            "listRecoleccionesLOCAL"
-          );
-
-          if (recoleccionesLOCALStore) {
-            setListRecoleccionesLOCAL(recoleccionesLOCALStore);
-          }
+          setListRutas(rutasStore);
         };
 
         loadData();
       }
+
+      fectGetRecolecciones(setListRecoleccionesLOCAL);
     }
   }, [isConnected, user]);
-
-  useEffect(() => {
-    if (listRecoleccionesLOCAL?.length > 0) {
-      saveData("listRecoleccionesLOCAL", listRecoleccionesLOCAL);
-    }
-  }, [listRecoleccionesLOCAL]);
 
   const crearRecoleccion = async () => {
     const url = await `${BASE_URL}/recolecciones/addRecoleccionAll.php`;
@@ -160,7 +155,7 @@ const MyContextProvider = ({ children }) => {
       const response = await axios.post(url, listRecoleccionesLOCAL);
       if (response.status === 200) {
         setRutaActiva(false);
-        saveData("rutaActiva", "false");
+        /*   saveData("rutaActiva", "false"); */
       }
     } catch (error) {}
   };
@@ -177,7 +172,7 @@ const MyContextProvider = ({ children }) => {
         rutaActual,
         isConnected,
         setListConductores,
-        setListGanaderos,
+        /*   setListGanaderos, */
         setListRutas,
         setListRecoleccionesLOCAL,
         setRutaActual,

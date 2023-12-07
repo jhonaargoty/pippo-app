@@ -4,12 +4,12 @@ import React, { useState, useEffect } from "react";
 import { StyleSheet, View, Image, Keyboard } from "react-native";
 import { Button, Text, Input, LinearProgress } from "@rneui/themed";
 import Icon from "react-native-vector-icons/FontAwesome5";
-import { saveData } from "../../utils";
 import axios from "axios";
 import NetInfo from "@react-native-community/netinfo";
 import { usuariosLOCAL, conductoresLOCAL } from "../../utils/data";
 import { BASE_URL } from "../../constants";
 import { useMyContext } from "../../../context";
+import SQLite from "react-native-sqlite-storage";
 
 const Index = ({ navigation }) => {
   const [inUser, setInUser] = useState(null);
@@ -31,6 +31,45 @@ const Index = ({ navigation }) => {
     verifyConnection();
   }, []);
 
+  let db = SQLite.openDatabase(
+    {
+      name: "pippo.db",
+      location: "default",
+    },
+    () => {
+      db.transaction((tx) => {
+        tx.executeSql(
+          "CREATE TABLE IF NOT EXISTS session (id TEXT PRIMARY KEY, nombre TEXT, placa TEXT, ruta TEXT);",
+          [],
+          (tx, results) => {
+            console.log("Table created successfully session");
+          },
+          (error) => {
+            console.log(error.message);
+          }
+        );
+      });
+    },
+    (error) => {
+      console.log(error.message);
+    }
+  );
+
+  const loginUser = (id, nombre, placa, ruta) => {
+    db.transaction((tx) => {
+      tx.executeSql(
+        "INSERT INTO session (id, nombre, placa, ruta) VALUES (?, ?, ?, ?);",
+        [id, nombre, placa, ruta],
+        (tx, results) => {
+          console.log("Data inserted successfully session");
+        },
+        (error) => {
+          console.log(error.message);
+        }
+      );
+    });
+  };
+
   const login = async () => {
     Keyboard.dismiss();
     const url = `${BASE_URL}/login/login.php`;
@@ -44,7 +83,12 @@ const Index = ({ navigation }) => {
         })
         .then((response) => {
           if (response?.status === 200) {
-            saveData("user", response?.data);
+            loginUser(
+              response?.data?.id,
+              response?.data?.nombre,
+              response?.data?.placa,
+              response?.data?.ruta
+            );
             setUser(response?.data);
             navigation.navigate("Home");
           }
@@ -59,8 +103,14 @@ const Index = ({ navigation }) => {
       const usuarioConductor = conductoresLOCAL.find(
         (c) => usuarioTemp?.id === c?.id
       );
+
       if (usuarioConductor) {
-        saveData("user", usuarioConductor);
+        loginUser(
+          usuarioConductor?.id,
+          usuarioConductor?.nombre,
+          usuarioConductor?.placa,
+          usuarioConductor?.ruta
+        );
         setUser(usuarioConductor);
         navigation.navigate("Home");
       } else {

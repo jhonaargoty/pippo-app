@@ -3,11 +3,8 @@ import { StyleSheet, View, KeyboardAvoidingView, Platform } from "react-native";
 import { Text, Divider, Input, Card, Button, Overlay } from "@rneui/themed";
 import { Icon } from "react-native-elements";
 import { SafeAreaView } from "react-native-safe-area-context";
-import axios from "axios";
 import { useMyContext } from "../../../context";
-
-import { removeData } from "../../utils";
-import { BASE_URL } from "../../constants";
+import SQLite from "react-native-sqlite-storage";
 
 import moment from "moment";
 import "moment/locale/es";
@@ -17,7 +14,6 @@ const Index = ({ navigation, route }) => {
     rutaActual,
     user,
     setListRecoleccionesLOCAL,
-    isConnected,
     listGanaderos,
     listConductores,
     listRutas,
@@ -33,6 +29,30 @@ const Index = ({ navigation, route }) => {
   const [observaciones, setObservaciones] = useState(null);
   const [dialogMessage, setDialogMessage] = useState(false);
 
+  let db = SQLite.openDatabase(
+    {
+      name: "pippo.db",
+      location: "default",
+    },
+    () => {
+      db.transaction((tx) => {
+        tx.executeSql(
+          "CREATE TABLE IF NOT EXISTS recolecciones (id INTEGER PRIMARY KEY AUTOINCREMENT, litros TEXT, observaciones TEXT, fecha TEXT, ganadero TEXT, conductor TEXT, ruta TEXT);",
+          [],
+          (tx, results) => {
+            console.log("Tabl recolecciones created successfully");
+          },
+          (error) => {
+            console.log(error.message);
+          }
+        );
+      });
+    },
+    (error) => {
+      console.log(error.message);
+    }
+  );
+
   const onSave = async () => {
     const item = {
       litros,
@@ -43,28 +63,31 @@ const Index = ({ navigation, route }) => {
       ruta: rutaActual?.id,
     };
 
-    const url = `${BASE_URL}/recolecciones/addRecoleccion.php`;
-
-    /*  if (isConnected) {
-      try {
-        setDialogMessage(true);
-        const response = await axios.post(url, { item });
-        if (response.status === 200) {
-          console.log("2000!!!!!");
+    db.transaction((tx) => {
+      tx.executeSql(
+        "INSERT INTO recolecciones (litros, observaciones, fecha, ganadero, conductor, ruta) VALUES (?, ?, ?, ?, ?, ?);",
+        [
+          item.litros,
+          item.observaciones,
+          item.fecha,
+          item.ganadero,
+          item.conductor,
+          item.ruta,
+        ],
+        (tx, results) => {
+          console.log("Data inserted successfully recolecciones");
+        },
+        (error) => {
+          console.log(error.message);
         }
-        console.log(response.data);
-      } catch (error) {
-        setDialogMessage(true);
-        console.error("Error:", error);
-        console.error("Response data:", error.response.data);
-      }
-    } else { */
+      );
+    });
+
     setListRecoleccionesLOCAL((listRecoleccionesLOCAL) => [
       ...listRecoleccionesLOCAL,
       { ...item },
     ]);
     setDialogMessage(true);
-    /*   } */
   };
 
   return (
