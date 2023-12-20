@@ -2,14 +2,23 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import axios from "axios";
 import NetInfo from "@react-native-community/netinfo";
-import { getData, removeData, saveData } from "./src/utils";
 import moment from "moment-timezone";
 import { BASE_URL } from "./src/constants";
-import SQLite from "react-native-sqlite-storage";
 import {
   fetchSaveGanaderos,
   fetchGetGanaderos,
   fectGetRecolecciones,
+  fetchGetConductores,
+  fetchSaveConductores,
+  fetchSaveRutas,
+  fetchGetRutas,
+  fetchSaveRutaActual,
+  fetchGetRutaActual,
+  fetchGetUSer,
+  fetchSaveRutaActiva,
+  fetchGetRutaActiva,
+  fectDeleteRecolecciones,
+  createDBRutaActiva,
 } from "./context_const";
 
 const MyContext = createContext();
@@ -27,34 +36,8 @@ const MyContextProvider = ({ children }) => {
   const [listRecoleccionesLOCAL, setListRecoleccionesLOCAL] = useState([]);
   const [rutaActual, setRutaActual] = useState(null);
   const [isConnected, setIsConnected] = useState(null);
-  const [currentDate, setCurrentDate] = useState(moment().tz("America/Bogota"));
-  const [rutaActiva, setRutaActiva] = useState(
-    /* getData("rutaActiva") === "false" ? false : */ true
-  );
-
-  let db = SQLite.openDatabase({
-    name: "pippo.db",
-    location: "default",
-  });
-
-  /* useEffect(() => {
-    const interval = setInterval(() => {
-      const now = moment().tz("America/Bogota");
-
-      if (!now.isSame(currentDate, "day")) {
-        setCurrentDate(now);
-        setRutaActiva(true);
-        saveData("rutaActiva", "true");
-        setListRecoleccionesLOCAL([]);
-        removeData("listRecoleccionesLOCAL");
-        console.log("¡Cambiaste de día!");
-      } else {
-        console.log("¡No cambiaste de día!");
-      }
-    }, 60000);
-
-    return () => clearInterval(interval);
-  }, [currentDate]); */
+  const [rutaActiva, setRutaActiva] = useState(null);
+  const [errorGETData, setErrorGETData] = useState(false);
 
   const verifyConnection = () => {
     NetInfo.addEventListener((state) => {
@@ -67,8 +50,8 @@ const MyContextProvider = ({ children }) => {
       const conductoresResponse = await axios.get(
         `${BASE_URL}/conductores/getListConductores.php`
       );
+      await fetchSaveConductores(conductoresResponse.data);
       setListConductores(conductoresResponse.data);
-      /*    saveData("listConductores", conductoresResponse?.data); */
 
       const ganaderosResponse = await axios.get(
         `${BASE_URL}/ganaderos/getListGanaderos.php`
@@ -79,20 +62,13 @@ const MyContextProvider = ({ children }) => {
       const rutasResponse = await axios.get(
         `${BASE_URL}/rutas/getListRutas.php`
       );
+      await fetchSaveRutas(rutasResponse.data);
       setListRutas(rutasResponse.data);
-      /*  saveData("listRutas", rutasResponse?.data); */
     } catch (error) {
       console.error("Error en las solicitudes:", error);
+      setErrorGETData(true);
     }
   };
-
-  /* useEffect(() => {
-    if (listRutas.length && user) {
-      const rs = listRutas.find((r) => r.id === user?.ruta);
-      setRutaActual(rs);
-      saveData("routeSelected", rs);
-    }
-  }, [user, listRutas]); */
 
   useEffect(() => {
     verifyConnection();
@@ -100,25 +76,7 @@ const MyContextProvider = ({ children }) => {
 
   useEffect(() => {
     const checkLogin = () => {
-      db.transaction((tx) => {
-        tx.executeSql(
-          "SELECT * FROM session;",
-          [],
-          (tx, results) => {
-            let len = results.rows.length;
-            if (len > 0) {
-              let row = results.rows.item(0);
-              console.log(`User ${row?.nombre} is logged in`);
-              setUser(row);
-            } else {
-              console.log("No user is logged in");
-            }
-          },
-          (error) => {
-            console.log(error.message);
-          }
-        );
-      });
+      fetchGetUSer(setUser);
     };
 
     checkLogin();
@@ -130,32 +88,35 @@ const MyContextProvider = ({ children }) => {
         fetchData();
       } else {
         const loadData = async () => {
-          /*  const conductoresStore = await getData("listConductores");
-          setListConductores(conductoresStore); */
-
+          await fetchGetConductores(setListConductores);
           await fetchGetGanaderos(setListGanaderos);
-
-          /* const ganaderosStore = await getData("listGanaderos");
-          setListGanaderos(ganaderosStore); */
-
-          const rutasStore = await getData("listRutas");
-          setListRutas(rutasStore);
+          await fetchGetRutas(setListRutas);
         };
-
         loadData();
       }
-
+      createDBRutaActiva();
+      fetchGetRutaActiva(setRutaActiva);
       fectGetRecolecciones(setListRecoleccionesLOCAL);
     }
   }, [isConnected, user]);
 
+  useEffect(() => {
+    if (listRutas?.length && user) {
+      const rs = listRutas.find((r) => parseInt(r.id) === parseInt(user?.ruta));
+
+      fetchSaveRutaActual(rs);
+      setRutaActual(rs);
+    }
+  }, [user, listRutas, isConnected]);
+
   const crearRecoleccion = async () => {
     const url = await `${BASE_URL}/recolecciones/addRecoleccionAll.php`;
+
     try {
       const response = await axios.post(url, listRecoleccionesLOCAL);
       if (response.status === 200) {
+        fetchSaveRutaActiva(false);
         setRutaActiva(false);
-        /*   saveData("rutaActiva", "false"); */
       }
     } catch (error) {}
   };
@@ -171,14 +132,12 @@ const MyContextProvider = ({ children }) => {
         setRutaActual,
         rutaActual,
         isConnected,
-        setListConductores,
-        /*   setListGanaderos, */
-        setListRutas,
-        setListRecoleccionesLOCAL,
-        setRutaActual,
         crearRecoleccion,
         listRecoleccionesLOCAL,
+        setListRecoleccionesLOCAL,
         rutaActiva,
+        setRutaActiva,
+        errorGETData,
       }}
     >
       {children}

@@ -1,28 +1,27 @@
 import React, { useState, useEffect } from "react";
 
-import {
-  StyleSheet,
-  View,
-  FlatList,
-  ImageBackground,
-  Image,
-} from "react-native";
-import { Button, Text, Card, Slider, Overlay, Divider } from "@rneui/themed";
+import { View, ImageBackground, Image, ActivityIndicator } from "react-native";
+import { Button, Text, Card, Slider } from "@rneui/themed";
 import IconF from "react-native-vector-icons/FontAwesome5";
-import IconF1 from "react-native-vector-icons/FontAwesome";
-import MC from "react-native-vector-icons/MaterialCommunityIcons";
 import { Icon } from "react-native-elements";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useMyContext } from "../../../context";
 
-import { keyExtractor, renderItem, saveData, removeData } from "../../utils";
+import { fetchSaveRutaActual } from "../../../context_const";
+
+import { removeData } from "../../utils";
 
 import moment from "moment";
 import "moment/locale/es";
 import image from "../../assets/background.png";
 
-import { imprimirVoucherDia } from "./voucherDia";
+import CarmbiarRuta from "./components/cambiarRuta";
+import FinalizarRuta from "./components/finalizarRuta";
+
+import { styles } from "./styles";
+import { sumarLitros } from "../../utils/voucherDia";
+import UltimasRecolecciones from "./components/ultimasRecolecciones";
 
 const Index = ({ navigation }) => {
   moment.locale("es");
@@ -33,26 +32,30 @@ const Index = ({ navigation }) => {
     user,
     setRutaActual,
     rutaActual,
-    setListRecoleccionesLOCAL,
     listRecoleccionesLOCAL,
     listConductores,
-    crearRecoleccion,
     isConnected,
     rutaActiva,
+    errorGETData,
   } = useMyContext();
 
   const formattedDate = moment().format("dddd D [de] MMMM");
-  const formattedDate2 = moment().format("DD/MM/YYYY");
   const formattedTime = moment().format("HH:mm");
 
   const [toggleOverlay, setToggleOverlay] = useState(false);
   const [percentage, setPercentage] = useState(0);
   const [finalizarRuta, setFinalizarRuta] = useState(false);
-  const [voucherDia, setVoucherDia] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setTimeout(() => {
+      setLoading(false);
+    }, 1000);
+  }, []);
 
   function getPercent() {
     const totalElements = listGanaderos?.filter(
-      (g) => g.ruta === rutaActual?.id
+      (g) => parseInt(g.ruta) === parseInt(rutaActual?.id)
     )?.length;
 
     const selectedElements = listRecoleccionesLOCAL?.length;
@@ -84,8 +87,8 @@ const Index = ({ navigation }) => {
   };
 
   const saveRouteSelected = (ruta) => {
+    fetchSaveRutaActual(ruta);
     setRutaActual(ruta);
-    saveData("routeSelected", ruta);
   };
 
   const logout = () => {
@@ -104,466 +107,230 @@ const Index = ({ navigation }) => {
     setListRecoleccionesLOCAL([]); */
   };
 
+  const colorButtons = (value) => {
+    return value ? "#b5b5b5" : "#c90000";
+  };
+
+  const getIconSlider = (value) => {
+    return (
+      <View style={{ width: 100 }}>
+        <Icon
+          name="local-shipping"
+          size={40}
+          containerStyle={{
+            bottom: 34,
+            right: percentage === 0 ? 0 : 20,
+            width: 40,
+            height: 40,
+          }}
+          color={getColorPercent()}
+        />
+      </View>
+    );
+  };
+
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.container_info}>
-        <ImageBackground source={image}>
-          <View style={styles.container_info_content}>
-            <View style={styles.info}>
-              <View>
-                <Text h3>Hola,</Text>
-                <Text h4>{user?.nombre}</Text>
-              </View>
-              <View style={styles.info_icon_logos}>
-                <Image
-                  style={styles.logo}
-                  source={require("../../assets/lola.png")}
-                />
-                <Image
-                  style={styles.logo_pippo}
-                  source={require("../../assets/logo_pipo.png")}
-                />
-              </View>
-              <View style={styles.info_icon}>
-                <IconF
-                  name="power-off"
-                  color="red"
-                  size={25}
-                  onPress={() => {
-                    logout();
-                  }}
-                />
-              </View>
-            </View>
-            <View style={styles.date_placas}>
-              <View style={styles.date_time}>
-                <Text style={styles.date}>{formattedDate}</Text>
-                <Text style={styles.date}>{formattedTime}</Text>
-              </View>
-              <View style={styles.placas_main}>
-                <Text style={styles.placas}>{user?.placa}</Text>
-              </View>
-            </View>
-          </View>
-        </ImageBackground>
-      </View>
-
-      <Button
-        title={"borrar"}
-        icon={<IconF name="route" color="white" size={20} />}
-        buttonStyle={styles.button}
-        onPress={() => {
-          borrarData();
-        }}
-      />
-
-      <View style={styles.buttons}>
-        <View style={styles.buttons_m}>
-          <Button
-            title={"Ruta"}
-            icon={<IconF name="route" color="white" size={20} />}
-            buttonStyle={styles.button}
-            onPress={() => setToggleOverlay(true)}
-          />
+      {loading ? (
+        <View style={styles.loading}>
+          <ActivityIndicator size="large" color="#c90000" />
+          <Text style={styles.text_loading}>Cargando datos...</Text>
         </View>
-        <View style={styles.buttons_m}>
-          <Button
-            title={"Registro"}
-            icon={<IconF name="plus-circle" color="white" size={20} />}
-            buttonStyle={styles.button}
-            onPress={() => navigation.navigate("Create")}
-            disabled={!rutaActiva}
-          />
+      ) : errorGETData ? (
+        <View style={styles.loading}>
+          <Icon name="error" size={40} color="#c90000" />
+          <></>
+          <Text style={styles.text_loading}>Error al traer Datos</Text>
+          <Text style={styles.text_loading}>Vuelva a abrir la app</Text>
         </View>
-      </View>
-
-      <View style={styles.flex}>
-        <Card
-          containerStyle={{ borderRadius: 10, margin: 0, marginBottom: 20 }}
-        >
-          <View style={styles.card_route}>
-            <IconF name="location-arrow" color="black" />
-            <Text>Ruta:</Text>
-            <Text style={styles.route_name}>{rutaActual?.nombre}</Text>
-          </View>
-
-          <View style={styles.card_route}>
-            <View style={styles.card_slider}>
-              <Slider
-                disabled
-                maximumValue={100}
-                minimumValue={0}
-                style={{ width: "94%", height: 50 }}
-                thumbStyle={{ height: 1, width: 1 }}
-                thumbProps={{
-                  children: (
-                    <Icon
-                      name="local-shipping"
-                      size={20}
-                      containerStyle={{
-                        bottom: 19,
-                        right: percentage === 0 ? 0 : 20,
-                        width: 20,
-                        height: 20,
-                      }}
-                      color={getColorPercent()}
+      ) : (
+        <>
+          <View style={styles.container_info}>
+            <ImageBackground source={image}>
+              <View style={styles.container_info_content}>
+                <View style={styles.info}>
+                  <View>
+                    <Text h3 style={styles.text_header}>
+                      Hola,
+                    </Text>
+                    <Text h4 style={styles.text_header}>
+                      {user?.nombre}
+                    </Text>
+                  </View>
+                  <View style={styles.info_icon_logos}>
+                    <Image
+                      style={styles.logo}
+                      source={require("../../assets/lola.png")}
                     />
-                  ),
-                }}
-                minimumTrackTintColor={getColorPercent()}
-                trackStyle={{
-                  height: 5,
-                  borderRadius: 20,
-                }}
-                value={percentage}
-              />
-              <View style={styles.card_slider_icon}>
-                <IconF name="flag-checkered" size={20} />
+                    <Image
+                      style={styles.logo_pippo}
+                      source={require("../../assets/logo_pipo.png")}
+                    />
+                  </View>
+                </View>
+                <View style={styles.date_placas}>
+                  <View style={styles.date_time}>
+                    <Text style={styles.date}>{formattedDate}</Text>
+                    <Text style={styles.date}>{formattedTime}</Text>
+                  </View>
+                  <View style={styles.placas_main}>
+                    <Text style={styles.placas}>{user?.placa}</Text>
+                  </View>
+                </View>
               </View>
-            </View>
+            </ImageBackground>
           </View>
 
-          <View style={styles.card_percent}>
-            <Text>Recorrido</Text>
-            <Text>{percentage}%</Text>
+          <View style={styles.flex}>
+            <Card
+              containerStyle={{ borderRadius: 10, margin: 0, marginBottom: 20 }}
+            >
+              <View style={styles.card_route}>
+                <IconF name="location-arrow" color="black" />
+                <Text>Ruta:</Text>
+                <Text style={styles.route_name}>{rutaActual?.nombre}</Text>
+              </View>
+
+              <View style={styles.card_route}>
+                <View style={styles.card_slider}>
+                  <Slider
+                    disabled
+                    maximumValue={100}
+                    minimumValue={0}
+                    style={{ width: "94%", height: 50 }}
+                    thumbStyle={{ height: 1, width: 1 }}
+                    thumbProps={{
+                      children: getIconSlider(),
+                    }}
+                    minimumTrackTintColor={getColorPercent()}
+                    trackStyle={{
+                      height: 5,
+                      borderRadius: 20,
+                    }}
+                    value={percentage}
+                  />
+
+                  <View style={styles.card_slider_icon}>
+                    <IconF name="flag-checkered" size={20} />
+                  </View>
+                </View>
+              </View>
+
+              <View style={styles.card_percent}>
+                <Text>Recorrido</Text>
+                <Text>{percentage}%</Text>
+                <Text>-</Text>
+                <Text>{sumarLitros(listRecoleccionesLOCAL)} lts</Text>
+              </View>
+            </Card>
+
+            <UltimasRecolecciones
+              listRecoleccionesLOCAL={listRecoleccionesLOCAL}
+              listGanaderos={listGanaderos}
+              listConductores={listConductores}
+              user={user}
+              navigation={navigation}
+              rutaActual={rutaActual}
+              listRutas={listRutas}
+            />
+
+            <FinalizarRuta
+              finalizarRuta={finalizarRuta}
+              setFinalizarRuta={setFinalizarRuta}
+            />
+
+            <CarmbiarRuta
+              toggleOverlay={toggleOverlay}
+              listRutas={listRutas}
+              setToggleOverlay={setToggleOverlay}
+              saveRouteSelected={saveRouteSelected}
+            />
           </View>
-        </Card>
-
-        <Card
-          containerStyle={{
-            borderRadius: 10,
-            margin: 0,
-            flex: 1,
-            paddingBottom: 80,
-            marginBottom: 20,
-          }}
-        >
-          <Card.Title>Ultimas recolecciones</Card.Title>
-          <Card.Divider />
-
-          {console.log("listRecoleccionesLOCAL--", listRecoleccionesLOCAL)}
-
-          {listRecoleccionesLOCAL?.length ? (
-            <FlatList
-              style={{ height: "auto" }}
-              keyExtractor={keyExtractor}
-              data={listRecoleccionesLOCAL?.map((item) => {
-                return {
-                  ...item,
-                  id: item.id,
-                  name: listGanaderos?.find(
-                    (c) =>
-                      parseInt(c.id) === parseInt(item.ganadero) ||
-                      parseInt(c.id) === parseInt(item.ganadero_id)
-                  )?.nombre,
-                  subtitle: item?.fecha,
-                  subtitleStyle: styles.subtitle,
-                  nameStyle: styles.last_title_name,
-                };
-              })}
-              renderItem={({ item }) =>
-                renderItem({
-                  item,
-                  onPress: () =>
-                    navigation.navigate("Print", {
-                      propData: {
-                        litros: item.litros,
-                        observaciones: item.observaciones,
-                        fecha: item.fecha,
-                        ganadero: listGanaderos.find(
-                          (g) => g.id === item.ganadero
-                        ).nombre,
-                        conductor: listConductores.find(
-                          (g) => g.id === user?.id
-                        ).nombre,
-                        ruta: listRutas.find((r) => r.id === rutaActual.id)
-                          .nombre,
-                        conductor_id: user?.id,
-                        ganadero_documento: listGanaderos.find(
-                          (g) => g.id === item.ganadero
-                        ).documento,
-                      },
-                    }),
-                })
+          <View style={styles.footer}>
+            <Button
+              disabled={!rutaActiva}
+              icon={
+                <IconF
+                  name="route"
+                  size={20}
+                  color={colorButtons(!rutaActiva)}
+                />
               }
+              title="Ruta"
+              iconPosition="top"
+              buttonStyle={styles.footer_icon}
+              onPress={() => setToggleOverlay(true)}
+              titleStyle={{ color: "black", fontSize: 14 }}
             />
-          ) : (
-            <View style={styles.not_data}>
-              <IconF1 name="warning" size={25} />
-              <Text>Sin datos</Text>
-            </View>
-          )}
-        </Card>
 
-        <View style={styles.buttons_footer}>
-          <Button
-            title={"Voucher dia"}
-            icon={<IconF name="print" color="white" size={20} />}
-            buttonStyle={styles.button}
-            onPress={() => {
-              setVoucherDia(true);
-            }}
-            disabled={!listRecoleccionesLOCAL?.length}
-          />
-          <Button
-            title={"Finalizar ruta"}
-            icon={<IconF name="route" color="white" size={20} />}
-            buttonStyle={styles.button_fin}
-            onPress={() => {
-              setFinalizarRuta(true);
-            }}
-            disabled={
-              !listRecoleccionesLOCAL?.length || !isConnected || !rutaActiva
-            }
-          />
-        </View>
-
-        <Overlay isVisible={voucherDia} overlayStyle={styles.overlay_finish}>
-          <View style={styles.title_overlay_finish}>
-            <Text style={styles.overlay_text_finish}>
-              {`¿Imprimir las ${listRecoleccionesLOCAL?.length} recolecciones del dia?`}
-            </Text>
-          </View>
-          <View style={styles.overlay_f_b}>
             <Button
-              title={"Cancelar"}
-              buttonStyle={{
-                backgroundColor: "rgba(214, 61, 57, 1)",
-                borderRadius: 20,
-                paddingHorizontal: 30,
-              }}
-              onPress={() => {
-                setVoucherDia(false);
-              }}
-            />
-            <Button
-              title={"Aceptar"}
-              buttonStyle={{
-                borderRadius: 20,
-                paddingHorizontal: 30,
-              }}
-              onPress={() => {
-                setVoucherDia(false);
-                imprimirVoucherDia({
-                  lista: listRecoleccionesLOCAL,
-                  user: user,
-                  fecha: formattedDate2,
-                  ganaderos: listGanaderos,
-                });
-              }}
-            />
-          </View>
-        </Overlay>
-        <Overlay isVisible={finalizarRuta} overlayStyle={styles.overlay_finish}>
-          <View style={styles.title_overlay_finish}>
-            <Text style={styles.overlay_text_finish}>
-              {"¿Desea terminar la ruta?"}
-            </Text>
-          </View>
-          <View style={styles.overlay_f_b}>
-            <Button
-              title={"Cancelar"}
-              buttonStyle={{
-                backgroundColor: "rgba(214, 61, 57, 1)",
-                borderRadius: 20,
-                paddingHorizontal: 30,
-              }}
-              onPress={() => {
-                setFinalizarRuta(false);
-              }}
-            />
-            <Button
-              title={"Aceptar"}
-              buttonStyle={{
-                borderRadius: 20,
-                paddingHorizontal: 30,
-              }}
-              onPress={() => {
-                setFinalizarRuta(false);
-                crearRecoleccion();
-              }}
-            />
-          </View>
-        </Overlay>
-
-        <Overlay isVisible={toggleOverlay} overlayStyle={styles.overlay}>
-          <View style={styles.title_overlay}>
-            <Text style={styles.overlay_text}>{"Cambiar ruta"}</Text>
-            <IconF1
-              style={styles.overlay_close}
-              name="close"
-              color="#c90000"
-              onPress={() => setToggleOverlay(false)}
-              size={20}
-            />
-          </View>
-          <Divider />
-          <View style={styles.overlay_list}>
-            <FlatList
-              keyExtractor={keyExtractor}
-              data={listRutas?.map((item) => {
-                return {
-                  ...item,
-                  name: item.nombre,
-                  nameStyle: styles.name_style,
-                };
-              })}
-              renderItem={({ item }) =>
-                renderItem({
-                  item,
-                  onPress: () => {
-                    saveRouteSelected(item);
-                    setToggleOverlay(false);
-                  },
-                })
+              icon={
+                <IconF
+                  name="plus-circle"
+                  size={20}
+                  color={colorButtons(!rutaActiva)}
+                />
               }
+              title="Registro"
+              iconPosition="top"
+              buttonStyle={styles.footer_icon}
+              onPress={() => navigation.navigate("Create")}
+              disabled={!rutaActiva}
+              titleStyle={{ color: "black", fontSize: 14 }}
             />
+            <Button
+              icon={
+                <IconF
+                  name="print"
+                  size={20}
+                  color={colorButtons(!listRecoleccionesLOCAL?.length)}
+                />
+              }
+              title="Diario"
+              iconPosition="top"
+              buttonStyle={styles.footer_icon}
+              onPress={() => navigation.navigate("VoucherDia")}
+              disabled={!listRecoleccionesLOCAL?.length}
+              titleStyle={{ color: "black", fontSize: 14 }}
+            />
+
+            {!rutaActiva ? (
+              <Button
+                onPress={() => {
+                  setFinalizarRuta(true);
+                }}
+                buttonStyle={styles.footer_icon}
+                icon={<IconF name="flag-checkered" size={20} color={"green"} />}
+                title={"Iniciar"}
+                iconPosition="top"
+                titleStyle={{ color: "black", fontSize: 14 }}
+              />
+            ) : (
+              <Button
+                disabled={!listRecoleccionesLOCAL?.length || !isConnected}
+                onPress={() => {
+                  setFinalizarRuta(true);
+                }}
+                buttonStyle={styles.footer_icon}
+                icon={
+                  <IconF
+                    name="flag-checkered"
+                    size={20}
+                    color={colorButtons(
+                      !listRecoleccionesLOCAL?.length || !isConnected
+                    )}
+                  />
+                }
+                title={"Finalizar"}
+                iconPosition="top"
+                titleStyle={{ color: "black", fontSize: 14 }}
+              />
+            )}
           </View>
-        </Overlay>
-      </View>
+        </>
+      )}
     </SafeAreaView>
   );
 };
-
-const styles = StyleSheet.create({
-  button_fin: {
-    backgroundColor: "#c90000",
-    borderRadius: 20,
-    gap: 10,
-    paddingHorizontal: 40,
-  },
-  buttons_footer: {
-    flexDirection: "row",
-    gap: 10,
-    justifyContent: "space-between",
-  },
-  info_icon_logos: { flexDirection: "row", gap: 10, alignItems: "center" },
-  logo_pippo: { width: 70, height: 50 },
-  logo: { width: 60, height: 60 },
-  title_overlay_finish: {
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  overlay_text_finish: { fontSize: 18 },
-  overlay_f_b: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    gap: 10,
-  },
-  overlay_finish: {
-    padding: 30,
-    flexDirection: "column",
-    justifyContent: "space-between",
-    gap: 50,
-  },
-  last_title_name: { fontSize: 14 },
-  name_style: { textTransform: "capitalize" },
-  not_data: {
-    width: "100%",
-    flexDirection: "row",
-    gap: 10,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  container_info_content: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    gap: 30,
-  },
-  container_info: {
-    overflow: "hidden",
-    borderRadius: 10,
-  },
-  subtitle: { color: "#c90000", fontSize: 12 },
-  last_title: { marginBottom: 20, fontWeight: "bold" },
-  flex: { flex: 1 },
-  /* last: { flex: 1 }, */
-  card_percent: {
-    flexDirection: "row",
-    justifyContent: "center",
-    marginTop: -20,
-    gap: 10,
-  },
-  container: {
-    flex: 1,
-    padding: 20,
-    gap: 20,
-    height: "100%",
-  },
-  info: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  content: {
-    flex: 1,
-  },
-  info_icon: { width: 30 },
-  buttons: {
-    width: "100%",
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  buttons_m: { width: "49%" },
-  button: {
-    backgroundColor: "#c90000",
-    borderRadius: 20,
-    gap: 10,
-  },
-  card_route: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  card_slider_icon: { marginBottom: 20, marginRight: 10 },
-  card_slider: {
-    width: "100%",
-    flexDirection: "row",
-  },
-  date: { textTransform: "capitalize" },
-  last: { marginTop: 20, height: 500 },
-  overlay: { padding: 20, width: "90%", height: "50%", borderRadius: 20 },
-
-  overlay_list: {
-    flex: 1,
-  },
-
-  date_placas: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  placas_main: {
-    backgroundColor: "#ffcc00",
-    paddingHorizontal: 1,
-    paddingVertical: 1,
-  },
-  placas: {
-    textTransform: "uppercase",
-    fontWeight: "bold",
-    borderWidth: 1,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-  },
-  title_overlay: {
-    flexDirection: "row",
-    justifyContent: "flex-end",
-    alignContent: "center",
-    marginBottom: 20,
-  },
-  overlay_text: {
-    fontSize: 20,
-    textAlign: "center",
-    color: "#c90000",
-    width: "90%",
-  },
-  overlay_close: { top: 3 },
-  route_name: {
-    fontWeight: "bold",
-    fontSize: 15,
-    textDecorationLine: "underline",
-    textTransform: "capitalize",
-  },
-});
 
 export default Index;

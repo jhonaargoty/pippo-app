@@ -33,7 +33,7 @@ const imprimir = async ({ lista, user, fecha, ganaderos, litrosTotales }) => {
   }
 };
 
-const sumarLitros = (arrayRecolecciones) => {
+export const sumarLitros = (arrayRecolecciones) => {
   const sumaTotal = arrayRecolecciones.reduce((total, recoleccion) => {
     const litros = parseFloat(recoleccion.litros) || 0;
     return total + litros;

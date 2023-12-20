@@ -123,8 +123,9 @@ const Index = ({ navigation, route }) => {
             <Text style={styles.item_desc}>Placas:</Text>
             <Text>
               {
-                listConductores?.find((lc) => lc.id === propData?.conductor_id)
-                  ?.placa
+                listConductores?.find(
+                  (lc) => parseInt(lc.id) === parseInt(propData?.conductor_id)
+                )?.placa
               }
             </Text>
           </View>

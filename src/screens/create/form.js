@@ -1,5 +1,11 @@
 import React, { useState } from "react";
-import { StyleSheet, View, KeyboardAvoidingView, Platform } from "react-native";
+import {
+  StyleSheet,
+  View,
+  KeyboardAvoidingView,
+  Platform,
+  Keyboard,
+} from "react-native";
 import { Text, Divider, Input, Card, Button, Overlay } from "@rneui/themed";
 import { Icon } from "react-native-elements";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -28,6 +34,7 @@ const Index = ({ navigation, route }) => {
   const [litros, setLitros] = useState(null);
   const [observaciones, setObservaciones] = useState(null);
   const [dialogMessage, setDialogMessage] = useState(false);
+  const [dialogMessageError, setDialogMessageError] = useState(false);
 
   let db = SQLite.openDatabase(
     {
@@ -53,7 +60,13 @@ const Index = ({ navigation, route }) => {
     }
   );
 
+  const [loadingSave, setLoadingSave] = useState(false);
+
   const onSave = async () => {
+    setLoadingSave(true);
+
+    Keyboard.dismiss();
+
     const item = {
       litros,
       observaciones,
@@ -62,32 +75,37 @@ const Index = ({ navigation, route }) => {
       conductor: user?.id,
       ruta: rutaActual?.id,
     };
+    setTimeout(() => {
+      setListRecoleccionesLOCAL((listRecoleccionesLOCAL) => [
+        ...listRecoleccionesLOCAL,
+        { ...item },
+      ]);
 
-    db.transaction((tx) => {
-      tx.executeSql(
-        "INSERT INTO recolecciones (litros, observaciones, fecha, ganadero, conductor, ruta) VALUES (?, ?, ?, ?, ?, ?);",
-        [
-          item.litros,
-          item.observaciones,
-          item.fecha,
-          item.ganadero,
-          item.conductor,
-          item.ruta,
-        ],
-        (tx, results) => {
-          console.log("Data inserted successfully recolecciones");
-        },
-        (error) => {
-          console.log(error.message);
-        }
-      );
-    });
-
-    setListRecoleccionesLOCAL((listRecoleccionesLOCAL) => [
-      ...listRecoleccionesLOCAL,
-      { ...item },
-    ]);
-    setDialogMessage(true);
+      db.transaction((tx) => {
+        tx.executeSql(
+          "INSERT OR IGNORE INTO recolecciones (litros, observaciones, fecha, ganadero, conductor, ruta) VALUES (?, ?, ?, ?, ?, ?);",
+          [
+            item.litros,
+            item.observaciones,
+            item.fecha,
+            item.ganadero,
+            item.conductor,
+            item.ruta,
+          ],
+          (tx, results) => {
+            console.log("Data inserted successfully recolecciones");
+            setDialogMessage(true);
+            setLoadingSave(false);
+          },
+          (error) => {
+            console.log(error.message);
+            setDialogMessage(true);
+            setDialogMessageError(true);
+            setLoadingSave(false);
+          }
+        );
+      });
+    }, 1000);
   };
 
   return (
@@ -153,53 +171,79 @@ const Index = ({ navigation, route }) => {
           </Card>
           <Overlay isVisible={dialogMessage} overlayStyle={styles.dialog}>
             <View style={styles.dialog_content}>
-              <Icon name="check-circle" size={40} color={"green"} />
-              <Text style={styles.text_ok}>Registro guardado</Text>
+              {dialogMessageError ? (
+                <Icon name="cancel" size={40} color={"red"} />
+              ) : (
+                <Icon name="check-circle" size={40} color={"green"} />
+              )}
+
+              <Text style={styles.text_ok}>
+                {dialogMessageError
+                  ? "Hubo un Error intente de nuevo"
+                  : "Registro guardado"}
+              </Text>
 
               <View style={styles.buttons}>
-                <Button
-                  title={"Imprimir"}
-                  buttonStyle={{ borderRadius: 20, paddingHorizontal: 30 }}
-                  onPress={() => {
-                    setDialogMessage(false);
-                    navigation.navigate("Print", {
-                      propData: {
-                        litros: litros,
-                        observaciones: observaciones,
-                        fecha: moment().format("YYYY-MM-DD HH:mm:ss"),
-                        ganadero: listGanaderos.find(
-                          (g) => g.id === propData.id
-                        ).nombre,
-                        conductor: listConductores.find(
-                          (g) => g.id === user?.id
-                        ).nombre,
-                        ruta: listRutas.find((r) => r.id === rutaActual.id)
-                          .nombre,
-                        conductor_id: user?.id,
-                        ganadero_documento: listGanaderos.find(
-                          (g) => g.id === propData.id
-                        ).documento,
-                      },
-                    });
-                  }}
-                />
-                <Button
-                  title={"Salir"}
-                  buttonStyle={{
-                    backgroundColor: "rgba(214, 61, 57, 1)",
-                    borderRadius: 20,
-                    paddingHorizontal: 30,
-                  }}
-                  onPress={() => {
-                    navigation.navigate("Home");
-                  }}
-                />
+                {dialogMessageError ? (
+                  <Button
+                    title={"Aceptar"}
+                    buttonStyle={{
+                      backgroundColor: "rgba(214, 61, 57, 1)",
+                      borderRadius: 20,
+                      paddingHorizontal: 30,
+                    }}
+                    onPress={() => {
+                      setDialogMessage(false);
+                    }}
+                  />
+                ) : (
+                  <View style={styles.buttons}>
+                    <Button
+                      title={"Imprimir"}
+                      buttonStyle={{ borderRadius: 20, paddingHorizontal: 30 }}
+                      onPress={() => {
+                        setDialogMessage(false);
+                        navigation.navigate("Print", {
+                          propData: {
+                            litros: litros,
+                            observaciones: observaciones,
+                            fecha: moment().format("YYYY-MM-DD HH:mm:ss"),
+                            ganadero: listGanaderos.find(
+                              (g) => parseInt(g.id) === parseInt(propData.id)
+                            ).nombre,
+                            conductor: listConductores.find(
+                              (g) => parseInt(g.id) === parseInt(user?.id)
+                            ).nombre,
+                            ruta: listRutas.find(
+                              (r) => parseInt(r.id) === parseInt(rutaActual.id)
+                            ).nombre,
+                            conductor_id: parseInt(user?.id),
+                            ganadero_documento: listGanaderos.find(
+                              (g) => parseInt(g.id) === parseInt(propData.id)
+                            )?.documento,
+                          },
+                        });
+                      }}
+                    />
+                    <Button
+                      title={"Salir"}
+                      buttonStyle={{
+                        backgroundColor: "rgba(214, 61, 57, 1)",
+                        borderRadius: 20,
+                        paddingHorizontal: 30,
+                      }}
+                      onPress={() => {
+                        navigation.navigate("Home");
+                      }}
+                    />
+                  </View>
+                )}
               </View>
             </View>
           </Overlay>
         </View>
         <Button
-          title={"Guardar"}
+          title={loadingSave ? "Guardando..." : "Guardar"}
           containerStyle={{
             width: "100%",
             marginTop: 20,
@@ -207,7 +251,7 @@ const Index = ({ navigation, route }) => {
           buttonStyle={{ height: 50, borderRadius: 10 }}
           titleStyle={{ marginHorizontal: 5, fontSize: 20 }}
           color={"green"}
-          disabled={!litros}
+          disabled={!litros || loadingSave}
           onPress={() => onSave()}
         />
       </KeyboardAvoidingView>
@@ -216,7 +260,7 @@ const Index = ({ navigation, route }) => {
 };
 
 const styles = StyleSheet.create({
-  text_ok: { fontSize: 20 },
+  text_ok: { fontSize: 20, textAlign: "center" },
   buttons: {
     flexDirection: "row",
     justifyContent: "space-between",

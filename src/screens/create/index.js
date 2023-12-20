@@ -16,7 +16,7 @@ import { useMyContext } from "../../../context";
 import moment from "moment";
 import "moment/locale/es";
 
-const Index = ({ navigation, route }) => {
+const Index = ({ navigation }) => {
   const {
     listGanaderos,
     rutaActual,
@@ -32,7 +32,9 @@ const Index = ({ navigation, route }) => {
   useEffect(() => {
     setLoading(true);
     setGanaderosByRuta(
-      listGanaderos?.filter((gl) => gl.ruta === rutaActual?.id)
+      listGanaderos?.filter(
+        (gl) => parseInt(gl.ruta) === parseInt(rutaActual?.id)
+      )
     );
     setLoading(false);
   }, [listGanaderos, rutaActual]);
@@ -46,20 +48,23 @@ const Index = ({ navigation, route }) => {
       let newItem = { ...item };
 
       newItem.conductor = listConductores.find(
-        (c) => c.id === item.conductor
-      ).nombre;
-      newItem.ganadero_documento = listGanaderos.find(
-        (c) => c.id === item.ganadero
-      ).documento;
-      newItem.ganadero = listGanaderos.find(
-        (c) => c.id === item.ganadero
-      ).nombre;
-      newItem.ganadero_id = listGanaderos.find(
-        (c) => c.id === item.ganadero
-      ).id;
-      newItem.ruta = listRutas.find((r) => r.id === item.ruta).nombre;
+        (c) => parseInt(c.id) === parseInt(item.conductor)
+      )?.nombre;
 
-      newItem.conductor_id = item.conductor;
+      newItem.ganadero_documento = listGanaderos.find(
+        (c) => parseInt(c.id) === parseInt(item.ganadero)
+      )?.documento;
+      newItem.ganadero = listGanaderos.find(
+        (c) => parseInt(c.id) === parseInt(item.ganadero)
+      )?.nombre;
+      newItem.ganadero_id = listGanaderos.find(
+        (c) => parseInt(c.id) === parseInt(item.ganadero)
+      )?.id;
+      newItem.ruta = listRutas.find(
+        (r) => parseInt(r.id) === parseInt(item.ruta)
+      )?.nombre;
+
+      newItem.conductor_id = parseInt(item.conductor);
       newData.push(newItem);
 
       setRecolecciones((recolecciones) => [...recolecciones, ...newData]);
@@ -67,12 +72,16 @@ const Index = ({ navigation, route }) => {
   }, []);
 
   const existRecolet = (item) => {
-    return !!recolecciones?.find((r) => r?.ganadero_id === item.id);
+    return !!recolecciones?.find(
+      (r) => parseInt(r?.ganadero_id) === parseInt(item.id)
+    );
   };
 
   const onPressItem = (item) => {
     const data = existRecolet(item)
-      ? recolecciones?.find((r) => r?.ganadero_id === item.id)
+      ? recolecciones?.find(
+          (r) => parseInt(r?.ganadero_id) === parseInt(item.id)
+        )
       : item;
 
     const destination = existRecolet(item) ? "Print" : "Form";
