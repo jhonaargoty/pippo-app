@@ -1,15 +1,22 @@
 import { StyleSheet } from "react-native";
 
 export const styles = StyleSheet.create({
+  bottomView: {
+    alignSelf: "flex-end",
+    height: 5,
+    marginTop: -20,
+  },
+  footer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    paddingHorizontal: 20,
+  },
+  overlay_f_b_1: {},
   loading: { flex: 1, justifyContent: "center", alignItems: "center" },
   footer_icon: {
     alignItems: "center",
     backgroundColor: "transparent",
     color: "black",
-  },
-  footer: {
-    flexDirection: "row",
-    justifyContent: "space-around",
   },
   button_fin: {
     backgroundColor: "#c90000",
@@ -58,10 +65,11 @@ export const styles = StyleSheet.create({
   container_info: {
     overflow: "hidden",
     borderRadius: 10,
+    /*  paddingHorizontal: 20, */
   },
   subtitle: { color: "#c90000", fontSize: 12 },
   last_title: { marginBottom: 20, fontWeight: "bold" },
-  flex: { flex: 1 },
+  flex: { flex: 1, paddingHorizontal: 20 },
   /* last: { flex: 1 }, */
   card_percent: {
     flexDirection: "row",
@@ -71,9 +79,10 @@ export const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    padding: 20,
+    padding: 0,
     gap: 20,
     height: "100%",
+    paddingBottom: 0,
   },
   info: {
     flexDirection: "row",

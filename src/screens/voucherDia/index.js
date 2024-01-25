@@ -1,17 +1,97 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { StyleSheet, View, FlatList } from "react-native";
 import { Text, Divider, Button, ListItem } from "@rneui/themed";
 import { Icon } from "react-native-elements";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useMyContext } from "../../../context";
 import moment from "moment";
+import ThermalPrinterModule from "react-native-thermal-printer";
+import { PermissionsAndroid } from "react-native";
 
-import { imprimirVoucherDia, sumarLitros } from "../../utils/voucherDia";
-import { keyExtractor, renderItem } from "../../utils";
+import { sumarLitros } from "../../utils/voucherDia";
+import { keyExtractor } from "../../utils";
 
 const Index = () => {
   const { listRecoleccionesLOCAL, listGanaderos, user } = useMyContext();
   const formattedDate2 = moment().format("DD/MM/YYYY");
+
+  const requestBluetoothScanPermission = async () => {
+    try {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
+        {
+          title: "Permiso de Bluetooth",
+          message:
+            "Tu aplicación necesita acceso a Bluetooth " +
+            "para imprimir recibos.",
+          buttonNeutral: "Pregúntame luego",
+          buttonNegative: "Cancelar",
+          buttonPositive: "OK",
+        }
+      );
+      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+        console.log("Tienes permiso para usar Bluetooth Scan");
+      } else {
+        console.log("Permiso de Bluetooth Scan denegado");
+      }
+    } catch (err) {
+      console.warn(err);
+    }
+  };
+
+  const requestBluetoothConnectPermission = async () => {
+    try {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
+        {
+          title: "Permiso de Bluetooth",
+          message:
+            "Tu aplicación necesita acceso a Bluetooth " +
+            "para imprimir recibos.",
+          buttonNeutral: "Pregúntame luego",
+          buttonNegative: "Cancelar",
+          buttonPositive: "OK",
+        }
+      );
+      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+        console.log("Tienes permiso para usar Bluetooth Connect");
+      } else {
+        console.log("Permiso de Bluetooth Connect denegado");
+      }
+    } catch (err) {
+      console.warn(err);
+    }
+  };
+
+  const requestBluetoothAdvertisePermission = async () => {
+    try {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.BLUETOOTH_ADVERTISE,
+        {
+          title: "Permiso de Bluetooth",
+          message:
+            "Tu aplicación necesita acceso a Bluetooth " +
+            "para imprimir recibos.",
+          buttonNeutral: "Pregúntame luego",
+          buttonNegative: "Cancelar",
+          buttonPositive: "OK",
+        }
+      );
+      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+        console.log("Tienes permiso para usar Bluetooth Advertise");
+      } else {
+        console.log("Permiso de Bluetooth Advertise denegado");
+      }
+    } catch (err) {
+      console.warn(err);
+    }
+  };
+
+  useEffect(() => {
+    requestBluetoothScanPermission();
+    requestBluetoothConnectPermission();
+    requestBluetoothAdvertisePermission();
+  }, []);
 
   const uniqueList = listRecoleccionesLOCAL?.filter(
     (v, i, a) =>
@@ -25,6 +105,58 @@ const Index = () => {
           t.ruta === v.ruta
       ) === i
   );
+
+  function getNombreGanadero(detalle) {
+    const ganadero = listGanaderos.find((g) => g.id === detalle?.ganadero);
+    let nombre = ganadero?.nombre || "";
+    if (nombre.length < 26) {
+      nombre = nombre.padEnd(26, " ");
+    } else {
+      nombre = nombre.substring(0, 26);
+    }
+    return nombre;
+  }
+
+  function formatLitros(litros) {
+    let litrosStr = String(litros);
+    if (litrosStr.length < 4) {
+      litrosStr = litrosStr.padStart(4, " ");
+    }
+    return litrosStr;
+  }
+
+  const imprimir = async () => {
+    try {
+      let receiptContent = "";
+      receiptContent += "[C]      Alimentos Pippo SAS\n";
+      receiptContent += "[C]     Parque Agroindustrial\n";
+      receiptContent += "[C]          Buenos Aires\n";
+      receiptContent += "[C]      Guasca - Cundinamarca\n";
+      receiptContent += "[C]   gerencia@alimentospippo.com\n";
+      receiptContent += "----------------------\n";
+      receiptContent += `[C]Recolectado por: ${user?.nombre}\n`;
+      receiptContent += `[C]Placas: ${user?.placa}\n\n`;
+      receiptContent += `[C]Fecha: ${formattedDate2}\n`;
+      receiptContent += "\n";
+      receiptContent += "----------------------\n";
+      receiptContent += `[C]Ganadero                  Litros\n`;
+      for (const detalle of uniqueList || []) {
+        receiptContent += `[C]${getNombreGanadero(detalle)} ${formatLitros(
+          detalle?.litros
+        )}\n`;
+      }
+      receiptContent += "----------------------\n";
+      receiptContent += `[C]TOTAL: ${sumarLitros(uniqueList)} litros\n`;
+
+      await ThermalPrinterModule.printBluetooth({
+        payload: receiptContent,
+        printerNbrCharactersPerLine: 1,
+      });
+    } catch (err) {
+      //error handling
+      console.log("-----", err.message);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -88,7 +220,7 @@ const Index = () => {
       <View style={styles.buttons_print}>
         <View style={styles.buttons_print_button}>
           <Button
-            onPress={() => imprimirVoucherDia()}
+            onPress={() => imprimir()}
             buttonStyle={styles.button}
             title={"Imprimir"}
             icon={<Icon name="print" color="white" />}

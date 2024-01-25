@@ -1,16 +1,18 @@
 import React, { useState, useEffect } from "react";
 
 import { View, ImageBackground, Image, ActivityIndicator } from "react-native";
-import { Button, Text, Card, Slider } from "@rneui/themed";
+import { Button, Text, Card, Slider, LinearProgress } from "@rneui/themed";
 import IconF from "react-native-vector-icons/FontAwesome5";
 import { Icon } from "react-native-elements";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useMyContext } from "../../../context";
 
-import { fetchSaveRutaActual } from "../../../context_const";
-
-import { removeData } from "../../utils";
+import {
+  fectDeleteGanaderos,
+  fectDeletesession,
+  fetchSaveRutaActual,
+} from "../../../context_const";
 
 import moment from "moment";
 import "moment/locale/es";
@@ -18,6 +20,7 @@ import image from "../../assets/background.png";
 
 import CarmbiarRuta from "./components/cambiarRuta";
 import FinalizarRuta from "./components/finalizarRuta";
+import Sync from "./components/sync";
 
 import { styles } from "./styles";
 import { sumarLitros } from "../../utils/voucherDia";
@@ -36,7 +39,11 @@ const Index = ({ navigation }) => {
     listConductores,
     isConnected,
     rutaActiva,
-    errorGETData,
+    fetchData,
+    sync,
+    setSync,
+    syncMessage,
+    syncLoading,
   } = useMyContext();
 
   const formattedDate = moment().format("dddd D [de] MMMM");
@@ -92,19 +99,11 @@ const Index = ({ navigation }) => {
   };
 
   const logout = () => {
-    removeData("user");
     navigation.navigate("Login");
   };
   const borrarData = async () => {
-    await removeData("user");
-    await removeData("listConductores");
-    await removeData("listGanaderos");
-    await removeData("listRutas");
-    await removeData("routeSelected");
-    await removeData("listRecoleccionesLOCAL");
-    await removeData("rutaActiva");
-    /* 
-    setListRecoleccionesLOCAL([]); */
+    fectDeletesession();
+    /* fectDeleteGanaderos(); */
   };
 
   const colorButtons = (value) => {
@@ -135,13 +134,6 @@ const Index = ({ navigation }) => {
         <View style={styles.loading}>
           <ActivityIndicator size="large" color="#c90000" />
           <Text style={styles.text_loading}>Cargando datos...</Text>
-        </View>
-      ) : errorGETData ? (
-        <View style={styles.loading}>
-          <Icon name="error" size={40} color="#c90000" />
-          <></>
-          <Text style={styles.text_loading}>Error al traer Datos</Text>
-          <Text style={styles.text_loading}>Vuelva a abrir la app</Text>
         </View>
       ) : (
         <>
@@ -239,6 +231,13 @@ const Index = ({ navigation }) => {
               setFinalizarRuta={setFinalizarRuta}
             />
 
+            <Sync
+              visible={sync}
+              close={() => setSync(false)}
+              message={syncMessage}
+              loading={syncLoading}
+            />
+
             <CarmbiarRuta
               toggleOverlay={toggleOverlay}
               listRutas={listRutas}
@@ -247,6 +246,21 @@ const Index = ({ navigation }) => {
             />
           </View>
           <View style={styles.footer}>
+            <Button
+              icon={
+                <IconF
+                  name="redo-alt"
+                  size={20}
+                  color={colorButtons(!isConnected)}
+                />
+              }
+              title="Sync"
+              iconPosition="top"
+              buttonStyle={styles.footer_icon}
+              onPress={() => fetchData()}
+              disabled={!isConnected || syncLoading}
+              titleStyle={{ color: "black", fontSize: 14 }}
+            />
             <Button
               disabled={!rutaActiva}
               icon={
@@ -326,9 +340,26 @@ const Index = ({ navigation }) => {
                 titleStyle={{ color: "black", fontSize: 14 }}
               />
             )}
+            {/* <Button
+              onPress={() => {
+                borrarData();
+              }}
+              buttonStyle={styles.footer_icon}
+              icon={
+                <IconF
+                  name="flag-checkered"
+                  size={20}
+                  color={colorButtons(false)}
+                />
+              }
+              title={"Borrar"}
+              iconPosition="top"
+              titleStyle={{ color: "black", fontSize: 14 }}
+            /> */}
           </View>
         </>
       )}
+      {syncLoading && <LinearProgress style={styles.bottomView} color="red" />}
     </SafeAreaView>
   );
 };

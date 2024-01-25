@@ -1,5 +1,6 @@
 import SQLite from "react-native-sqlite-storage";
 //npx expo run:android
+//eas build -p android --profile preview
 let db = SQLite.openDatabase({
   name: "pippo.db",
   location: "default",
@@ -286,6 +287,7 @@ export const fectGetRecolecciones = async (setListRecoleccionesLOCAL) => {
             let row = results.rows.item(i);
             data.push(row);
           }
+          console.log("data recolecciones", data);
           setListRecoleccionesLOCAL(data);
         } else {
           console.log("No data found recolecciones");
@@ -302,6 +304,44 @@ export const fectDeleteRecolecciones = async (setListRecoleccionesLOCAL) => {
   db.transaction((tx) => {
     tx.executeSql(
       "DELETE FROM recolecciones",
+      [],
+      (tx, results) => {
+        console.log("Resultados", results.rowsAffected);
+        if (results.rowsAffected > 0) {
+          setListRecoleccionesLOCAL([]);
+        } else {
+          console.log("No se encontraron datos para eliminar.");
+        }
+      },
+      (error) => {
+        console.log("Error al eliminar los datos", error);
+      }
+    );
+  });
+};
+export const fectDeleteGanaderos = async (setListRecoleccionesLOCAL) => {
+  db.transaction((tx) => {
+    tx.executeSql(
+      "DELETE FROM ganaderos",
+      [],
+      (tx, results) => {
+        console.log("Resultados", results.rowsAffected);
+        if (results.rowsAffected > 0) {
+          setListRecoleccionesLOCAL([]);
+        } else {
+          console.log("No se encontraron datos para eliminar.");
+        }
+      },
+      (error) => {
+        console.log("Error al eliminar los datos", error);
+      }
+    );
+  });
+};
+export const fectDeletesession = async (setListRecoleccionesLOCAL) => {
+  db.transaction((tx) => {
+    tx.executeSql(
+      "DELETE FROM session",
       [],
       (tx, results) => {
         console.log("Resultados", results.rowsAffected);

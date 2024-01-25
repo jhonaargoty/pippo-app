@@ -1,53 +1,120 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { StyleSheet, View } from "react-native";
-import { BackHandler } from "react-native";
-import { useFocusEffect } from "@react-navigation/native";
 import { Text, Divider, Button, Overlay } from "@rneui/themed";
 import { Icon } from "react-native-elements";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useMyContext } from "../../../context";
 import ThermalPrinterModule from "react-native-thermal-printer";
+import { PermissionsAndroid } from "react-native";
 
 const Index = ({ navigation, route }) => {
   const { listConductores } = useMyContext();
   const { propData } = route.params;
 
-  useFocusEffect(
-    React.useCallback(() => {
-      const onBackPress = () => {
-        navigation.navigate("Home");
+  const requestBluetoothScanPermission = async () => {
+    try {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
+        {
+          title: "Permiso de Bluetooth",
+          message:
+            "Tu aplicación necesita acceso a Bluetooth " +
+            "para imprimir recibos.",
+          buttonNeutral: "Pregúntame luego",
+          buttonNegative: "Cancelar",
+          buttonPositive: "OK",
+        }
+      );
+      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+        console.log("Tienes permiso para usar Bluetooth Scan");
+      } else {
+        console.log("Permiso de Bluetooth Scan denegado");
+      }
+    } catch (err) {
+      console.warn(err);
+    }
+  };
 
-        return true;
-      };
+  const requestBluetoothConnectPermission = async () => {
+    try {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
+        {
+          title: "Permiso de Bluetooth",
+          message:
+            "Tu aplicación necesita acceso a Bluetooth " +
+            "para imprimir recibos.",
+          buttonNeutral: "Pregúntame luego",
+          buttonNegative: "Cancelar",
+          buttonPositive: "OK",
+        }
+      );
+      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+        console.log("Tienes permiso para usar Bluetooth Connect");
+      } else {
+        console.log("Permiso de Bluetooth Connect denegado");
+      }
+    } catch (err) {
+      console.warn(err);
+    }
+  };
 
-      BackHandler.addEventListener("hardwareBackPress", onBackPress);
+  const requestBluetoothAdvertisePermission = async () => {
+    try {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.BLUETOOTH_ADVERTISE,
+        {
+          title: "Permiso de Bluetooth",
+          message:
+            "Tu aplicación necesita acceso a Bluetooth " +
+            "para imprimir recibos.",
+          buttonNeutral: "Pregúntame luego",
+          buttonNegative: "Cancelar",
+          buttonPositive: "OK",
+        }
+      );
+      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+        console.log("Tienes permiso para usar Bluetooth Advertise");
+      } else {
+        console.log("Permiso de Bluetooth Advertise denegado");
+      }
+    } catch (err) {
+      console.warn(err);
+    }
+  };
 
-      return () =>
-        BackHandler.removeEventListener("hardwareBackPress", onBackPress);
-    }, [])
-  );
+  useEffect(() => {
+    requestBluetoothScanPermission();
+    requestBluetoothConnectPermission();
+    requestBluetoothAdvertisePermission();
+  }, []);
 
   const imprimir = async () => {
     try {
       let receiptContent = "";
-      receiptContent += "[C]       Alimentos Pippo SAS\n";
-      receiptContent += "[C]       Parque Agroindustrial\n";
-      receiptContent += "[C]       Buenos Aires\n";
-      receiptContent += "[C]       Guasca - Cundinamarca\n";
-      receiptContent += "[C]       gerencia@alimentospippo.com\n";
-      receiptContent += "[C]       Recibo de recolección\n";
-      receiptContent += `[C]       Fecha: ${propData?.fecha}\n`;
+      receiptContent += "[C]      Alimentos Pippo SAS\n";
+      receiptContent += "[C]     Parque Agroindustrial\n";
+      receiptContent += "[C]          Buenos Aires\n";
+      receiptContent += "[C]      Guasca - Cundinamarca\n";
+      receiptContent += "[C]   gerencia@alimentospippo.com\n";
+      receiptContent += "[C]      Recibo de recoleccion\n";
+      receiptContent += `[C]      Fecha: ${propData?.fecha}\n`;
       receiptContent += "----------------------\n";
       receiptContent += `[C]Ruta: ${propData?.ruta?.toUpperCase()}\n`;
-      receiptContent += `[C]Ganadero: ${propData?.ganadero}\n`;
+      receiptContent += `[C]Ganadero:\n`;
+      receiptContent += `[C]${propData?.ganadero}\n`;
       receiptContent += `[C]Documento: ${propData?.ganadero_documento}\n`;
       receiptContent += "----------------------\n";
-      receiptContent += `[C]       Litros: ${propData?.litros || "-"}\n`;
-      receiptContent += `[C]       Observaciones:\n`;
-      receiptContent += `[C]       ${propData?.observaciones || "Ninguna"}\n`;
+      receiptContent += `[C]Litros: ${propData?.litros || "-"}\n`;
+      receiptContent += `[C]Observaciones:\n`;
+      receiptContent += `[C]${propData?.observaciones || "Ninguna"}\n`;
       receiptContent += "----------------------\n";
       receiptContent += `[C]Recolectado por: ${propData?.conductor}\n`;
-      receiptContent += `[C]Placas: ${propData?.conductor_placas}\n\n\n`;
+      receiptContent += `[C]Placas: ${
+        listConductores.find(
+          (c) => parseInt(c.id) === parseInt(propData?.conductor_id)
+        )?.placa
+      }\n\n\n`;
 
       await ThermalPrinterModule.printBluetooth({
         payload: receiptContent,
@@ -58,6 +125,13 @@ const Index = ({ navigation, route }) => {
       console.log("-----", err.message);
     }
   };
+
+  console.log(
+    "propData",
+    listConductores.find(
+      (c) => parseInt(c.id) === parseInt(propData?.conductor_id)
+    )?.placa
+  );
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.info_navigation}>
@@ -90,6 +164,8 @@ const Index = ({ navigation, route }) => {
             </View>
             <View style={styles.item_ganadero}>
               <Text style={styles.item_desc}>Ganadero: </Text>
+            </View>
+            <View style={styles.item_ganadero}>
               <Text>{propData?.ganadero}</Text>
             </View>
             <View style={styles.item}>

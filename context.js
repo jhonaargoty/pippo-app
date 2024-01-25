@@ -35,9 +35,11 @@ const MyContextProvider = ({ children }) => {
   const [listRutas, setListRutas] = useState([]);
   const [listRecoleccionesLOCAL, setListRecoleccionesLOCAL] = useState([]);
   const [rutaActual, setRutaActual] = useState(null);
-  const [isConnected, setIsConnected] = useState(null);
+  const [isConnected, setIsConnected] = useState(false);
   const [rutaActiva, setRutaActiva] = useState(null);
-  const [errorGETData, setErrorGETData] = useState(false);
+  const [sync, setSync] = useState(false);
+  const [syncMessage, setSyncMessage] = useState(null);
+  const [syncLoading, setSyncLoading] = useState(false);
 
   const verifyConnection = () => {
     NetInfo.addEventListener((state) => {
@@ -46,6 +48,7 @@ const MyContextProvider = ({ children }) => {
   };
 
   const fetchData = async () => {
+    setSyncLoading(true);
     try {
       const conductoresResponse = await axios.get(
         `${BASE_URL}/conductores/getListConductores.php`
@@ -64,14 +67,23 @@ const MyContextProvider = ({ children }) => {
       );
       await fetchSaveRutas(rutasResponse.data);
       setListRutas(rutasResponse.data);
+
+      setSync(true);
+      setSyncMessage("!Datos sincronizados!");
     } catch (error) {
+      setSync(true);
+      setSyncMessage("Error, intente de nuevo");
       console.error("Error en las solicitudes:", error);
-      setErrorGETData(true);
     }
+    setSyncLoading(false);
   };
 
   useEffect(() => {
-    verifyConnection();
+    const interval = setInterval(() => {
+      verifyConnection();
+    }, 10000);
+
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
@@ -84,21 +96,18 @@ const MyContextProvider = ({ children }) => {
 
   useEffect(() => {
     if (user) {
-      if (isConnected) {
-        fetchData();
-      } else {
-        const loadData = async () => {
-          await fetchGetConductores(setListConductores);
-          await fetchGetGanaderos(setListGanaderos);
-          await fetchGetRutas(setListRutas);
-        };
-        loadData();
-      }
+      const loadData = async () => {
+        await fetchGetConductores(setListConductores);
+        await fetchGetGanaderos(setListGanaderos);
+        await fetchGetRutas(setListRutas);
+      };
+
+      loadData();
       createDBRutaActiva();
       fetchGetRutaActiva(setRutaActiva);
       fectGetRecolecciones(setListRecoleccionesLOCAL);
     }
-  }, [isConnected, user]);
+  }, [user]);
 
   useEffect(() => {
     if (listRutas?.length && user) {
@@ -137,7 +146,11 @@ const MyContextProvider = ({ children }) => {
         setListRecoleccionesLOCAL,
         rutaActiva,
         setRutaActiva,
-        errorGETData,
+        fetchData,
+        sync,
+        setSync,
+        syncMessage,
+        syncLoading,
       }}
     >
       {children}
