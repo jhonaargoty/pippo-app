@@ -10,6 +10,8 @@ import Create from "./src/screens/create";
 import Form from "./src/screens/create/form";
 import Print from "./src/screens/print";
 import VoucherDia from "./src/screens/voucherDia";
+import TestGPS from "./src/screens/testGPS";
+import Quality from "./src/screens/quality";
 
 const Stack = createNativeStackNavigator();
 
@@ -25,7 +27,7 @@ function App() {
   return (
     <SafeAreaProvider>
       <NavigationContainer>
-        <Stack.Navigator initialRouteName={user ? "Home" : "Login"}>
+        <Stack.Navigator initialRouteName={user?.nombre || user?.usuario ? "Home" : "Login"}>
           <Stack.Screen
             name="Login"
             component={Login}
@@ -46,6 +48,16 @@ function App() {
           <Stack.Screen
             name="VoucherDia"
             component={VoucherDia}
+            options={optionsScreens}
+          />
+          <Stack.Screen
+            name="gps"
+            component={TestGPS}
+            options={optionsScreens}
+          />
+          <Stack.Screen
+            name="Quality"
+            component={Quality}
             options={optionsScreens}
           />
         </Stack.Navigator>

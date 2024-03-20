@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
 
-import { View, ImageBackground, Image, ActivityIndicator } from "react-native";
+import { View, ImageBackground, Image, ActivityIndicator,FlatList } from "react-native";
 import { Button, Text, Card, Slider, LinearProgress } from "@rneui/themed";
 import IconF from "react-native-vector-icons/FontAwesome5";
 import { Icon } from "react-native-elements";
 import { SafeAreaView } from "react-native-safe-area-context";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import { keyExtractor, renderItem } from "../../utils";
 
 import { useMyContext } from "../../../context";
 
@@ -44,7 +46,11 @@ const Index = ({ navigation }) => {
     setSync,
     syncMessage,
     syncLoading,
+    fetchRoutesByDate,
+    recoleccionesByFecha,
   } = useMyContext();
+
+  console.log("user", user);
 
   const formattedDate = moment().format("dddd D [de] MMMM");
   const formattedTime = moment().format("HH:mm");
@@ -128,6 +134,25 @@ const Index = ({ navigation }) => {
     );
   };
 
+  const [date, setDate] = useState(new Date());
+  const [showPicker, setShowPicker] = useState(false);
+
+  const handleDateChange = (event, selectedDate) => {
+    console.log("selectedDate1", selectedDate);
+    fetchRoutesByDate(selectedDate);
+    setShowPicker(false);
+    if (selectedDate) {
+      console.log("selectedDate", selectedDate);
+      setDate(selectedDate);
+    }
+  };
+
+  const showDatepicker = () => {
+    setShowPicker(true);
+  };
+
+  console.log("date", date);
+
   return (
     <SafeAreaView style={styles.container}>
       {loading ? (
@@ -146,7 +171,7 @@ const Index = ({ navigation }) => {
                       Hola,
                     </Text>
                     <Text h4 style={styles.text_header}>
-                      {user?.nombre}
+                      {user?.nombre || user?.usuario?.toUpperCase()}
                     </Text>
                   </View>
                   <View style={styles.info_icon_logos}>
@@ -160,71 +185,129 @@ const Index = ({ navigation }) => {
                     />
                   </View>
                 </View>
+
                 <View style={styles.date_placas}>
                   <View style={styles.date_time}>
                     <Text style={styles.date}>{formattedDate}</Text>
                     <Text style={styles.date}>{formattedTime}</Text>
                   </View>
-                  <View style={styles.placas_main}>
-                    <Text style={styles.placas}>{user?.placa}</Text>
-                  </View>
+                  {user?.tipo !== "2" && (
+                    <View style={styles.placas_main}>
+                      <Text style={styles.placas}>{user?.placa}</Text>
+                    </View>
+                  )}
                 </View>
               </View>
             </ImageBackground>
           </View>
 
           <View style={styles.flex}>
-            <Card
-              containerStyle={{ borderRadius: 10, margin: 0, marginBottom: 20 }}
-            >
-              <View style={styles.card_route}>
-                <IconF name="location-arrow" color="black" />
-                <Text>Ruta:</Text>
-                <Text style={styles.route_name}>{rutaActual?.nombre}</Text>
-              </View>
-
-              <View style={styles.card_route}>
-                <View style={styles.card_slider}>
-                  <Slider
-                    disabled
-                    maximumValue={100}
-                    minimumValue={0}
-                    style={{ width: "94%", height: 50 }}
-                    thumbStyle={{ height: 1, width: 1 }}
-                    thumbProps={{
-                      children: getIconSlider(),
-                    }}
-                    minimumTrackTintColor={getColorPercent()}
-                    trackStyle={{
-                      height: 5,
-                      borderRadius: 20,
-                    }}
-                    value={percentage}
-                  />
-
-                  <View style={styles.card_slider_icon}>
-                    <IconF name="flag-checkered" size={20} />
+            {user?.tipo !== "2" && (
+              <>
+                <Card containerStyle={styles.card_standar}>
+                  <View style={styles.card_route}>
+                    <IconF name="location-arrow" color="black" />
+                    <Text>Ruta:</Text>
+                    <Text style={styles.route_name}>{rutaActual?.nombre}</Text>
                   </View>
-                </View>
-              </View>
 
-              <View style={styles.card_percent}>
-                <Text>Recorrido</Text>
-                <Text>{percentage}%</Text>
-                <Text>-</Text>
-                <Text>{sumarLitros(listRecoleccionesLOCAL)} lts</Text>
+                  <View style={styles.card_route}>
+                    <View style={styles.card_slider}>
+                      <Slider
+                        disabled
+                        maximumValue={100}
+                        minimumValue={0}
+                        style={{ width: "94%", height: 50 }}
+                        thumbStyle={{ height: 1, width: 1 }}
+                        thumbProps={{
+                          children: getIconSlider(),
+                        }}
+                        minimumTrackTintColor={getColorPercent()}
+                        trackStyle={{
+                          height: 5,
+                          borderRadius: 20,
+                        }}
+                        value={percentage}
+                      />
+
+                      <View style={styles.card_slider_icon}>
+                        <IconF name="flag-checkered" size={20} />
+                      </View>
+                    </View>
+                  </View>
+
+                  <View style={styles.card_percent}>
+                    <Text>Recorrido</Text>
+                    <Text>{percentage}%</Text>
+                    <Text>-</Text>
+                    <Text>{sumarLitros(listRecoleccionesLOCAL)} lts</Text>
+                  </View>
+                </Card>
+
+                <UltimasRecolecciones
+                  listRecoleccionesLOCAL={listRecoleccionesLOCAL}
+                  listGanaderos={listGanaderos}
+                  listConductores={listConductores}
+                  user={user}
+                  navigation={navigation}
+                  rutaActual={rutaActual}
+                  listRutas={listRutas}
+                />
+              </>
+            )}
+
+            <Card containerStyle={styles.card_standar}>
+              <View /* style={styles.card_route} */>
+                {/*  <Text>{date}</Text> */}
+                <Button onPress={()=>showDatepicker()} title="Seleccionar fecha" />
+                               {showPicker && (
+                  <DateTimePicker
+                    value={date}
+                    mode="date"
+                    display="default"
+                    onChange={(e, date)=>handleDateChange(e, date)}
+                  />
+                )}
               </View>
             </Card>
-
-            <UltimasRecolecciones
-              listRecoleccionesLOCAL={listRecoleccionesLOCAL}
-              listGanaderos={listGanaderos}
-              listConductores={listConductores}
-              user={user}
-              navigation={navigation}
-              rutaActual={rutaActual}
-              listRutas={listRutas}
-            />
+            <Card containerStyle={styles.card_standar}>
+              <View /* style={styles.card_route} */>
+                {console.log("recoleccionesByFecha", recoleccionesByFecha)}
+              {recoleccionesByFecha?.length > 0 ? (
+        <FlatList
+          style={{ height: "auto" }}
+          keyExtractor={keyExtractor}
+          data={recoleccionesByFecha?.map((item) => {
+            return {
+              ...item,
+              id: item.ruta_id,
+              name: item?.ruta,
+              subtitle: `${item?.litros} Lt`,
+              subtitleStyle: styles.subtitle,
+              nameStyle: styles.ruta_title,
+            };
+          })}
+          renderItem={({ item }) =>
+            renderItem({
+              item,
+              onPress: () =>
+                navigation.navigate("Quality", {
+                  propData: {
+                    ...item,
+                    date: date,
+                  },
+                }),
+            })
+          }
+        />
+      ) : (
+        <View style={styles.not_data}>
+         {/*  <IconF1 name="warning" size={25} /> */}
+          <Text>No hay recolecciones para este dia </Text>
+        </View>
+      )}
+              </View>
+            </Card>
 
             <FinalizarRuta
               finalizarRuta={finalizarRuta}
@@ -292,6 +375,20 @@ const Index = ({ navigation }) => {
               disabled={!rutaActiva}
               titleStyle={{ color: "black", fontSize: 14 }}
             />
+            {/*  <Button
+              icon={
+                <IconF
+                  name="plus-circle"
+                  size={20}
+                  color={colorButtons(!rutaActiva)}
+                />
+              }
+              title="GPS"
+              iconPosition="top"
+              buttonStyle={styles.footer_icon}
+              onPress={() => navigation.navigate("gps")}
+             
+            /> */}
             <Button
               icon={
                 <IconF

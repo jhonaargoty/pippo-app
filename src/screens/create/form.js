@@ -150,9 +150,7 @@ const Index = ({ navigation, route }) => {
                 style={styles.input}
                 keyboardType="numeric"
                 onChangeText={(e) => setLitros(e)}
-                inputContainerStyle={
-                  Platform.OS === "android" && { borderBottomWidth: 0 }
-                }
+               
               />
             </View>
 
@@ -163,10 +161,7 @@ const Index = ({ navigation, route }) => {
             <View style={styles.inputs_content}>
               <Input
                 onChangeText={(e) => setObservaciones(e)}
-                inputContainerStyle={
-                  Platform.OS === "android" && { borderBottomWidth: 0 }
-                }
-              />
+                             />
             </View>
           </Card>
           <Overlay isVisible={dialogMessage} overlayStyle={styles.dialog}>

@@ -141,9 +141,7 @@ const Index = ({ navigation }) => {
               onChangeText={(e) => setInUser(e)}
               placeholder="Usuario"
               leftIcon={<Icon name="user-alt" size={20} />}
-              inputContainerStyle={
-                Platform.OS === "android" && { borderBottomWidth: 0 }
-              }
+            
             />
           </View>
           <View style={styles.inputs_content}>
@@ -153,9 +151,7 @@ const Index = ({ navigation }) => {
               placeholder="Contraseña"
               leftIcon={<Icon name="key" size={20} />}
               secureTextEntry={true}
-              inputContainerStyle={
-                Platform.OS === "android" && { borderBottomWidth: 0 }
-              }
+              
             />
           </View>
           <View>

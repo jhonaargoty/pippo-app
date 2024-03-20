@@ -130,6 +130,83 @@ const MyContextProvider = ({ children }) => {
     } catch (error) {}
   };
 
+  const [recoleccionesByFecha, setRecoleccionesByFecha] = useState([]);
+
+  console.log("recoleccionesByFecha", recoleccionesByFecha);
+
+  const fetchRoutesByDate = async (date) => {
+        const formattedDate = moment(date).format("YYYY-MM-DD");
+
+    try {
+      const recolecciones = await axios.get(
+        `${BASE_URL}recolecciones/getRecoleccionesByFecha.php?fechaIni=${formattedDate}&fechaFin=${formattedDate}`
+      );
+      const formatData = obtenerInformacionRutas(recolecciones.data);
+      setRecoleccionesByFecha(formatData);
+    } catch (error) {
+      setSync(true);
+      setSyncMessage("Error, intente de nuevo");
+      console.error("Error en las solicitudes:", error);
+    }
+  };
+
+  function obtenerInformacionRutas(datos) {
+    const rutas = {};
+
+    datos.forEach((dato) => {
+      const { ruta, ruta_id, conductor, conductor_id, litros } = dato;
+
+      if (!rutas[ruta]) {
+        rutas[ruta] = { ruta_id, litros: parseInt(litros) };
+      } else {
+        rutas[ruta].litros += parseInt(litros);
+      }
+
+      if (!rutas[ruta].conductores) {
+        rutas[ruta].conductores = [];
+      }
+
+      if (
+        !rutas[ruta].conductores.some((c) => c.conductor_id === conductor_id)
+      ) {
+        rutas[ruta].conductores.push({ conductor, conductor_id });
+      }
+    });
+
+    const rutasConDosConductores = Object.entries(rutas)
+      .filter(([_, info]) => info.conductores && info.conductores.length === 2)
+      .map(([ruta, info]) => {
+        const conductores = info.conductores.map((c) => ({
+          conductor: c.conductor,
+          conductor_id: c.conductor_id,
+        }));
+        return {
+          ruta,
+          ruta_id: info.ruta_id,
+          litros: info.litros,
+          conductores,
+        };
+      });
+
+    rutasConDosConductores.forEach((ruta) => delete rutas[ruta.ruta]);
+
+    const resultado = Object.entries(rutas).map(([ruta, info]) => ({
+      ruta,
+      ruta_id: info.ruta_id,
+      litros: info.litros,
+            conductores: info.conductores
+        ? info.conductores.map((c) => ({
+            conductor: c.conductor,
+            conductor_id: c.conductor_id,
+          }))
+        : undefined,
+    }));
+
+    resultado.push(...rutasConDosConductores);
+
+    return resultado;
+  }
+
   return (
     <MyContext.Provider
       value={{
@@ -151,6 +228,8 @@ const MyContextProvider = ({ children }) => {
         setSync,
         syncMessage,
         syncLoading,
+        fetchRoutesByDate,
+        recoleccionesByFecha
       }}
     >
       {children}

@@ -1,6 +1,10 @@
 import { StyleSheet } from "react-native";
 
 export const styles = StyleSheet.create({
+  ruta_title: { textTransform: "capitalize" },
+  card_standar: {borderRadius: 10,
+    margin: 0,
+    marginBottom: 20,},
   bottomView: {
     alignSelf: "flex-end",
     height: 5,
