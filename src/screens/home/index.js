@@ -138,7 +138,7 @@ const Index = ({ navigation }) => {
                       Hola,
                     </Text>
 
-                    {user?.nombre === "X" && (
+                    {/*  {user?.nombre === "X" && (
                       <Button
                         style={styles.button}
                         onPress={() => {
@@ -148,7 +148,7 @@ const Index = ({ navigation }) => {
                       >
                         cerrar sesion
                       </Button>
-                    )}
+                    )} */}
                     <Text h4 style={styles.text_header}>
                       {user?.nombre || user?.usuario?.toUpperCase()}
                     </Text>

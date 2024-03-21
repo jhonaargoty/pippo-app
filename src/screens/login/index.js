@@ -66,6 +66,7 @@ const Index = ({ navigation }) => {
       [id, nombre, placa, ruta, tipo],
       (tx, results) => {
         console.log("Data inserted or replaced successfully session");
+        navigation.navigate("Home");
       },
       (error) => {
         console.log(error.message);
@@ -78,7 +79,7 @@ const Index = ({ navigation }) => {
     const url = `${BASE_URL}/login/login.php`;
     setLoading(true);
 
-    if (isConnected) {
+    if (!isConnected) {
       await axios
         .post(url, {
           user: inUser,
@@ -96,7 +97,6 @@ const Index = ({ navigation }) => {
 
             loginUser(user);
             setUser(user);
-            navigation.navigate("Home");
           }
         })
         .catch((error) => {
