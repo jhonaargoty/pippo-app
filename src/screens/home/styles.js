@@ -1,10 +1,20 @@
 import { StyleSheet } from "react-native";
 
 export const styles = StyleSheet.create({
+  date_container: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  title_date: {
+    fontSize: 14,
+    textAlign: "center",
+    marginBottom: 5,
+    color: "#c90000",
+    fontWeight: "bold",
+  },
   ruta_title: { textTransform: "capitalize" },
-  card_standar: {borderRadius: 10,
-    margin: 0,
-    marginBottom: 20,},
+  card_standar: { borderRadius: 10, margin: 0, marginBottom: 20 },
   bottomView: {
     alignSelf: "flex-end",
     height: 5,

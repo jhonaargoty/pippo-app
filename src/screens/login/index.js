@@ -31,43 +31,46 @@ const Index = ({ navigation }) => {
     verifyConnection();
   }, []);
 
-  let db = SQLite.openDatabase(
-    {
-      name: "pippo.db",
-      location: "default",
-    },
-    () => {
-      db.transaction((tx) => {
-        tx.executeSql(
-          "CREATE TABLE IF NOT EXISTS session (id TEXT PRIMARY KEY, nombre TEXT, placa TEXT, ruta TEXT);",
-          [],
-          (tx, results) => {
-            console.log("Table created successfully session");
-          },
-          (error) => {
-            console.log(error.message);
-          }
-        );
-      });
-    },
-    (error) => {
-      console.log(error.message);
-    }
-  );
+  
 
-  const loginUser = (id, nombre, placa, ruta) => {
-    db.transaction((tx) => {
-      tx.executeSql(
-        "INSERT INTO session (id, nombre, placa, ruta) VALUES (?, ?, ?, ?);",
-        [id, nombre, placa, ruta],
-        (tx, results) => {
-          console.log("Data inserted successfully session");
-        },
-        (error) => {
-          console.log(error.message);
-        }
-      );
-    });
+  const loginUser = ({ id, nombre, placa, ruta, tipo }) => {
+    let db = SQLite.openDatabase(
+      {
+        name: "pippo.db",
+        location: "default",
+      },
+      () => {
+        db.transaction((tx) => {
+          tx.executeSql(
+            "CREATE TABLE IF NOT EXISTS session (id TEXT PRIMARY KEY, nombre TEXT, placa TEXT, ruta TEXT, tipo TEXT);",
+            [],
+            (tx, results) => {
+              console.log("Table created successfully session");
+              insertDataIntoSessionTable(tx, id, nombre, placa, ruta, tipo);
+            },
+            (error) => {
+              console.log(error.message);
+            }
+          );
+        });
+      },
+      (error) => {
+        console.log(error.message);
+      }
+    );
+  };
+
+  const insertDataIntoSessionTable = (tx, id, nombre, placa, ruta, tipo) => {
+    tx.executeSql(
+      "INSERT OR REPLACE INTO session (id, nombre, placa, ruta, tipo) VALUES (?, ?, ?, ?, ?);",
+      [id, nombre, placa, ruta, tipo],
+      (tx, results) => {
+        console.log("Data inserted or replaced successfully session");
+      },
+      (error) => {
+        console.log(error.message);
+      }
+    );
   };
 
   const login = async () => {
@@ -83,13 +86,16 @@ const Index = ({ navigation }) => {
         })
         .then((response) => {
           if (response?.status === 200) {
-            loginUser(
-              response?.data?.id,
-              response?.data?.nombre,
-              response?.data?.placa,
-              response?.data?.ruta
-            );
-            setUser(response?.data);
+            const user = {
+              id: response?.data?.id,
+              nombre: response?.data?.nombre || response?.data?.usuario,
+              placa: response?.data?.placa,
+              ruta: response?.data?.ruta,
+              tipo: response?.data?.tipo,
+            };
+
+            loginUser(user);
+            setUser(user);
             navigation.navigate("Home");
           }
         })
@@ -100,19 +106,29 @@ const Index = ({ navigation }) => {
       const usuarioTemp = usuariosLOCAL.find(
         (u) => u.usuario === inUser && u.password === password
       );
-      const usuarioConductor = conductoresLOCAL.find(
-        (c) => usuarioTemp?.id === c?.id
-      );
-
-      if (usuarioConductor) {
-        loginUser(
-          usuarioConductor?.id,
-          usuarioConductor?.nombre,
-          usuarioConductor?.placa,
-          usuarioConductor?.ruta
-        );
-        setUser(usuarioConductor);
-        navigation.navigate("Home");
+      if (usuarioTemp) {
+        if (usuarioTemp.tipo === 1) {
+          const usuarioConductor = conductoresLOCAL.find(
+            (c) => usuarioTemp.id === c.id
+          );
+          const user = {
+            id: usuarioConductor.id,
+            nombre: usuarioConductor.nombre,
+            placa: usuarioConductor.placa,
+            ruta: usuarioConductor.ruta,
+            tipo: "1",
+          };
+          loginUser(user);
+          setUser(user);
+        } else {
+          const user = {
+            id: usuarioTemp.id,
+            nombre: usuarioTemp.usuario,
+            tipo: usuarioTemp.tipo,
+          };
+          loginUser(user);
+          setUser(user);
+        }
       } else {
         setErrorlogin(true);
       }
@@ -141,7 +157,6 @@ const Index = ({ navigation }) => {
               onChangeText={(e) => setInUser(e)}
               placeholder="Usuario"
               leftIcon={<Icon name="user-alt" size={20} />}
-            
             />
           </View>
           <View style={styles.inputs_content}>
@@ -151,7 +166,6 @@ const Index = ({ navigation }) => {
               placeholder="Contraseña"
               leftIcon={<Icon name="key" size={20} />}
               secureTextEntry={true}
-              
             />
           </View>
           <View>

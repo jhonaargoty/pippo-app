@@ -36,4 +36,5 @@ export const usuariosLOCAL = [
   { id: "111", usuario: "dayan", password: "dayan0000", tipo: 1 },
   { id: "12", usuario: "octaviano", password: "octaviano0000", tipo: 1 },
   { id: "114", usuario: "calidad", password: "calidad123$", tipo: 2 },
+  { id: "117", usuario: "X", password: "x", tipo: 2 },
 ];

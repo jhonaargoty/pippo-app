@@ -1,20 +1,16 @@
+/* eslint-disable react/prop-types */
+/* eslint-disable no-undef */
 import React, { useState, useEffect } from "react";
 
-import { View, ImageBackground, Image, ActivityIndicator,FlatList } from "react-native";
+import { View, ImageBackground, Image, ActivityIndicator } from "react-native";
 import { Button, Text, Card, Slider, LinearProgress } from "@rneui/themed";
 import IconF from "react-native-vector-icons/FontAwesome5";
 import { Icon } from "react-native-elements";
 import { SafeAreaView } from "react-native-safe-area-context";
-import DateTimePicker from "@react-native-community/datetimepicker";
-import { keyExtractor, renderItem } from "../../utils";
 
 import { useMyContext } from "../../../context";
 
-import {
-  fectDeleteGanaderos,
-  fectDeletesession,
-  fetchSaveRutaActual,
-} from "../../../context_const";
+import { fetchSaveRutaActual, fectDeletesession } from "../../../context_const";
 
 import moment from "moment";
 import "moment/locale/es";
@@ -27,6 +23,7 @@ import Sync from "./components/sync";
 import { styles } from "./styles";
 import { sumarLitros } from "../../utils/voucherDia";
 import UltimasRecolecciones from "./components/ultimasRecolecciones";
+import AnalisisRutas from "./components/analisisRutas";
 
 const Index = ({ navigation }) => {
   moment.locale("es");
@@ -35,6 +32,7 @@ const Index = ({ navigation }) => {
     listGanaderos,
     listRutas,
     user,
+    setUser,
     setRutaActual,
     rutaActual,
     listRecoleccionesLOCAL,
@@ -46,11 +44,7 @@ const Index = ({ navigation }) => {
     setSync,
     syncMessage,
     syncLoading,
-    fetchRoutesByDate,
-    recoleccionesByFecha,
   } = useMyContext();
-
-  console.log("user", user);
 
   const formattedDate = moment().format("dddd D [de] MMMM");
   const formattedTime = moment().format("HH:mm");
@@ -104,19 +98,11 @@ const Index = ({ navigation }) => {
     setRutaActual(ruta);
   };
 
-  const logout = () => {
-    navigation.navigate("Login");
-  };
-  const borrarData = async () => {
-    fectDeletesession();
-    /* fectDeleteGanaderos(); */
-  };
-
   const colorButtons = (value) => {
     return value ? "#b5b5b5" : "#c90000";
   };
 
-  const getIconSlider = (value) => {
+  const getIconSlider = () => {
     return (
       <View style={{ width: 100 }}>
         <Icon
@@ -133,25 +119,6 @@ const Index = ({ navigation }) => {
       </View>
     );
   };
-
-  const [date, setDate] = useState(new Date());
-  const [showPicker, setShowPicker] = useState(false);
-
-  const handleDateChange = (event, selectedDate) => {
-    console.log("selectedDate1", selectedDate);
-    fetchRoutesByDate(selectedDate);
-    setShowPicker(false);
-    if (selectedDate) {
-      console.log("selectedDate", selectedDate);
-      setDate(selectedDate);
-    }
-  };
-
-  const showDatepicker = () => {
-    setShowPicker(true);
-  };
-
-  console.log("date", date);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -170,6 +137,18 @@ const Index = ({ navigation }) => {
                     <Text h3 style={styles.text_header}>
                       Hola,
                     </Text>
+
+                    {user?.nombre === "X" && (
+                      <Button
+                        style={styles.button}
+                        onPress={() => {
+                          fectDeletesession();
+                          setUser(null);
+                        }}
+                      >
+                        cerrar sesion
+                      </Button>
+                    )}
                     <Text h4 style={styles.text_header}>
                       {user?.nombre || user?.usuario?.toUpperCase()}
                     </Text>
@@ -253,129 +232,72 @@ const Index = ({ navigation }) => {
                   rutaActual={rutaActual}
                   listRutas={listRutas}
                 />
-              </>
-            )}
+                <FinalizarRuta
+                  finalizarRuta={finalizarRuta}
+                  setFinalizarRuta={setFinalizarRuta}
+                />
 
-            <Card containerStyle={styles.card_standar}>
-              <View /* style={styles.card_route} */>
-                {/*  <Text>{date}</Text> */}
-                <Button onPress={()=>showDatepicker()} title="Seleccionar fecha" />
-                               {showPicker && (
-                  <DateTimePicker
-                    value={date}
-                    mode="date"
-                    display="default"
-                    onChange={(e, date)=>handleDateChange(e, date)}
+                <Sync
+                  visible={sync}
+                  close={() => setSync(false)}
+                  message={syncMessage}
+                  loading={syncLoading}
+                />
+
+                <CarmbiarRuta
+                  toggleOverlay={toggleOverlay}
+                  listRutas={listRutas}
+                  setToggleOverlay={setToggleOverlay}
+                  saveRouteSelected={saveRouteSelected}
+                />
+                <View style={styles.footer}>
+                  <Button
+                    icon={
+                      <IconF
+                        name="redo-alt"
+                        size={20}
+                        color={colorButtons(!isConnected)}
+                      />
+                    }
+                    title="Sync"
+                    iconPosition="top"
+                    buttonStyle={styles.footer_icon}
+                    onPress={() => fetchData()}
+                    disabled={!isConnected || syncLoading}
+                    titleStyle={{ color: "black", fontSize: 14 }}
                   />
-                )}
-              </View>
-            </Card>
-            <Card containerStyle={styles.card_standar}>
-              <View /* style={styles.card_route} */>
-                {console.log("recoleccionesByFecha", recoleccionesByFecha)}
-              {recoleccionesByFecha?.length > 0 ? (
-        <FlatList
-          style={{ height: "auto" }}
-          keyExtractor={keyExtractor}
-          data={recoleccionesByFecha?.map((item) => {
-            return {
-              ...item,
-              id: item.ruta_id,
-              name: item?.ruta,
-              subtitle: `${item?.litros} Lt`,
-              subtitleStyle: styles.subtitle,
-              nameStyle: styles.ruta_title,
-            };
-          })}
-          renderItem={({ item }) =>
-            renderItem({
-              item,
-              onPress: () =>
-                navigation.navigate("Quality", {
-                  propData: {
-                    ...item,
-                    date: date,
-                  },
-                }),
-            })
-          }
-        />
-      ) : (
-        <View style={styles.not_data}>
-         {/*  <IconF1 name="warning" size={25} /> */}
-          <Text>No hay recolecciones para este dia </Text>
-        </View>
-      )}
-              </View>
-            </Card>
+                  <Button
+                    disabled={!rutaActiva}
+                    icon={
+                      <IconF
+                        name="route"
+                        size={20}
+                        color={colorButtons(!rutaActiva)}
+                      />
+                    }
+                    title="Ruta"
+                    iconPosition="top"
+                    buttonStyle={styles.footer_icon}
+                    onPress={() => setToggleOverlay(true)}
+                    titleStyle={{ color: "black", fontSize: 14 }}
+                  />
 
-            <FinalizarRuta
-              finalizarRuta={finalizarRuta}
-              setFinalizarRuta={setFinalizarRuta}
-            />
-
-            <Sync
-              visible={sync}
-              close={() => setSync(false)}
-              message={syncMessage}
-              loading={syncLoading}
-            />
-
-            <CarmbiarRuta
-              toggleOverlay={toggleOverlay}
-              listRutas={listRutas}
-              setToggleOverlay={setToggleOverlay}
-              saveRouteSelected={saveRouteSelected}
-            />
-          </View>
-          <View style={styles.footer}>
-            <Button
-              icon={
-                <IconF
-                  name="redo-alt"
-                  size={20}
-                  color={colorButtons(!isConnected)}
-                />
-              }
-              title="Sync"
-              iconPosition="top"
-              buttonStyle={styles.footer_icon}
-              onPress={() => fetchData()}
-              disabled={!isConnected || syncLoading}
-              titleStyle={{ color: "black", fontSize: 14 }}
-            />
-            <Button
-              disabled={!rutaActiva}
-              icon={
-                <IconF
-                  name="route"
-                  size={20}
-                  color={colorButtons(!rutaActiva)}
-                />
-              }
-              title="Ruta"
-              iconPosition="top"
-              buttonStyle={styles.footer_icon}
-              onPress={() => setToggleOverlay(true)}
-              titleStyle={{ color: "black", fontSize: 14 }}
-            />
-
-            <Button
-              icon={
-                <IconF
-                  name="plus-circle"
-                  size={20}
-                  color={colorButtons(!rutaActiva)}
-                />
-              }
-              title="Registro"
-              iconPosition="top"
-              buttonStyle={styles.footer_icon}
-              onPress={() => navigation.navigate("Create")}
-              disabled={!rutaActiva}
-              titleStyle={{ color: "black", fontSize: 14 }}
-            />
-            {/*  <Button
+                  <Button
+                    icon={
+                      <IconF
+                        name="plus-circle"
+                        size={20}
+                        color={colorButtons(!rutaActiva)}
+                      />
+                    }
+                    title="Registro"
+                    iconPosition="top"
+                    buttonStyle={styles.footer_icon}
+                    onPress={() => navigation.navigate("Create")}
+                    disabled={!rutaActiva}
+                    titleStyle={{ color: "black", fontSize: 14 }}
+                  />
+                  {/*  <Button
               icon={
                 <IconF
                   name="plus-circle"
@@ -389,55 +311,61 @@ const Index = ({ navigation }) => {
               onPress={() => navigation.navigate("gps")}
              
             /> */}
-            <Button
-              icon={
-                <IconF
-                  name="print"
-                  size={20}
-                  color={colorButtons(!listRecoleccionesLOCAL?.length)}
-                />
-              }
-              title="Diario"
-              iconPosition="top"
-              buttonStyle={styles.footer_icon}
-              onPress={() => navigation.navigate("VoucherDia")}
-              disabled={!listRecoleccionesLOCAL?.length}
-              titleStyle={{ color: "black", fontSize: 14 }}
-            />
-
-            {!rutaActiva ? (
-              <Button
-                onPress={() => {
-                  setFinalizarRuta(true);
-                }}
-                buttonStyle={styles.footer_icon}
-                icon={<IconF name="flag-checkered" size={20} color={"green"} />}
-                title={"Iniciar"}
-                iconPosition="top"
-                titleStyle={{ color: "black", fontSize: 14 }}
-              />
-            ) : (
-              <Button
-                disabled={!listRecoleccionesLOCAL?.length || !isConnected}
-                onPress={() => {
-                  setFinalizarRuta(true);
-                }}
-                buttonStyle={styles.footer_icon}
-                icon={
-                  <IconF
-                    name="flag-checkered"
-                    size={20}
-                    color={colorButtons(
-                      !listRecoleccionesLOCAL?.length || !isConnected
-                    )}
+                  <Button
+                    icon={
+                      <IconF
+                        name="print"
+                        size={20}
+                        color={colorButtons(!listRecoleccionesLOCAL?.length)}
+                      />
+                    }
+                    title="Diario"
+                    iconPosition="top"
+                    buttonStyle={styles.footer_icon}
+                    onPress={() => navigation.navigate("VoucherDia")}
+                    disabled={!listRecoleccionesLOCAL?.length}
+                    titleStyle={{ color: "black", fontSize: 14 }}
                   />
-                }
-                title={"Finalizar"}
-                iconPosition="top"
-                titleStyle={{ color: "black", fontSize: 14 }}
-              />
-            )}
-            {/* <Button
+
+                  {!rutaActiva ? (
+                    <Button
+                      onPress={() => {
+                        setFinalizarRuta(true);
+                      }}
+                      buttonStyle={styles.footer_icon}
+                      icon={
+                        <IconF
+                          name="flag-checkered"
+                          size={20}
+                          color={"green"}
+                        />
+                      }
+                      title={"Iniciar"}
+                      iconPosition="top"
+                      titleStyle={{ color: "black", fontSize: 14 }}
+                    />
+                  ) : (
+                    <Button
+                      disabled={!listRecoleccionesLOCAL?.length || !isConnected}
+                      onPress={() => {
+                        setFinalizarRuta(true);
+                      }}
+                      buttonStyle={styles.footer_icon}
+                      icon={
+                        <IconF
+                          name="flag-checkered"
+                          size={20}
+                          color={colorButtons(
+                            !listRecoleccionesLOCAL?.length || !isConnected
+                          )}
+                        />
+                      }
+                      title={"Finalizar"}
+                      iconPosition="top"
+                      titleStyle={{ color: "black", fontSize: 14 }}
+                    />
+                  )}
+                  {/* <Button
               onPress={() => {
                 borrarData();
               }}
@@ -453,6 +381,11 @@ const Index = ({ navigation }) => {
               iconPosition="top"
               titleStyle={{ color: "black", fontSize: 14 }}
             /> */}
+                </View>
+              </>
+            )}
+
+            {user?.tipo === "2" && <AnalisisRutas navigation={navigation} />}
           </View>
         </>
       )}

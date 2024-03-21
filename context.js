@@ -94,7 +94,7 @@ const MyContextProvider = ({ children }) => {
     checkLogin();
   }, [isConnected]);
 
-  useEffect(() => {
+  /* useEffect(() => {
     if (user) {
       const loadData = async () => {
         await fetchGetConductores(setListConductores);
@@ -107,16 +107,16 @@ const MyContextProvider = ({ children }) => {
       fetchGetRutaActiva(setRutaActiva);
       fectGetRecolecciones(setListRecoleccionesLOCAL);
     }
-  }, [user]);
+  }, [user]); */
 
-  useEffect(() => {
+  /*  useEffect(() => {
     if (listRutas?.length && user) {
       const rs = listRutas.find((r) => parseInt(r.id) === parseInt(user?.ruta));
 
       fetchSaveRutaActual(rs);
       setRutaActual(rs);
     }
-  }, [user, listRutas, isConnected]);
+  }, [user, listRutas, isConnected]); */
 
   const crearRecoleccion = async () => {
     const url = await `${BASE_URL}/recolecciones/addRecoleccionAll.php`;
@@ -132,10 +132,8 @@ const MyContextProvider = ({ children }) => {
 
   const [recoleccionesByFecha, setRecoleccionesByFecha] = useState([]);
 
-  console.log("recoleccionesByFecha", recoleccionesByFecha);
-
   const fetchRoutesByDate = async (date) => {
-        const formattedDate = moment(date).format("YYYY-MM-DD");
+    const formattedDate = moment(date).format("YYYY-MM-DD");
 
     try {
       const recolecciones = await axios.get(
@@ -194,7 +192,7 @@ const MyContextProvider = ({ children }) => {
       ruta,
       ruta_id: info.ruta_id,
       litros: info.litros,
-            conductores: info.conductores
+      conductores: info.conductores
         ? info.conductores.map((c) => ({
             conductor: c.conductor,
             conductor_id: c.conductor_id,
@@ -229,7 +227,7 @@ const MyContextProvider = ({ children }) => {
         syncMessage,
         syncLoading,
         fetchRoutesByDate,
-        recoleccionesByFecha
+        recoleccionesByFecha,
       }}
     >
       {children}
