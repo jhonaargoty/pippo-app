@@ -1,5 +1,3 @@
-/* eslint-disable n/handle-callback-err */
-/* eslint-disable no-undef */
 import React, { useState, useEffect } from "react";
 import { StyleSheet, View, Image, Keyboard } from "react-native";
 import { Button, Text, Input, LinearProgress } from "@rneui/themed";
@@ -30,8 +28,6 @@ const Index = ({ navigation }) => {
   useEffect(() => {
     verifyConnection();
   }, []);
-
-  
 
   const loginUser = ({ id, nombre, placa, ruta, tipo }) => {
     let db = SQLite.openDatabase(

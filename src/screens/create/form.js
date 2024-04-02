@@ -1,11 +1,5 @@
 import React, { useState } from "react";
-import {
-  StyleSheet,
-  View,
-  KeyboardAvoidingView,
-  Platform,
-  Keyboard,
-} from "react-native";
+import { StyleSheet, View, KeyboardAvoidingView, Keyboard } from "react-native";
 import { Text, Divider, Input, Card, Button, Overlay } from "@rneui/themed";
 import { Icon } from "react-native-elements";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -23,6 +17,7 @@ const Index = ({ navigation, route }) => {
     listGanaderos,
     listConductores,
     listRutas,
+    gpsUser,
   } = useMyContext();
 
   moment.locale("es");
@@ -36,36 +31,36 @@ const Index = ({ navigation, route }) => {
   const [dialogMessage, setDialogMessage] = useState(false);
   const [dialogMessageError, setDialogMessageError] = useState(false);
 
-  let db = SQLite.openDatabase(
-    {
-      name: "pippo.db",
-      location: "default",
-    },
-    () => {
-      db.transaction((tx) => {
-        tx.executeSql(
-          "CREATE TABLE IF NOT EXISTS recolecciones (id INTEGER PRIMARY KEY AUTOINCREMENT, litros TEXT, observaciones TEXT, fecha TEXT, ganadero TEXT, conductor TEXT, ruta TEXT);",
-          [],
-          (tx, results) => {
-            console.log("Tabl recolecciones created successfully");
-          },
-          (error) => {
-            console.log(error.message);
-          }
-        );
-      });
-    },
-    (error) => {
-      console.log(error.message);
-    }
-  );
-
   const [loadingSave, setLoadingSave] = useState(false);
 
   const onSave = async () => {
     setLoadingSave(true);
 
     Keyboard.dismiss();
+
+    let db = SQLite.openDatabase(
+      {
+        name: "pippo.db",
+        location: "default",
+      },
+      () => {
+        db.transaction((tx) => {
+          tx.executeSql(
+            "CREATE TABLE IF NOT EXISTS recolecciones (id INTEGER PRIMARY KEY AUTOINCREMENT, litros TEXT, observaciones TEXT, fecha TEXT, ganadero TEXT, conductor TEXT, ruta TEXT, gps_lat TEXT, gps_long TEXT);",
+            [],
+            (tx, results) => {
+              console.log("Table recolecciones created successfully");
+            },
+            (error) => {
+              console.log(error.message);
+            }
+          );
+        });
+      },
+      (error) => {
+        console.log(error.message);
+      }
+    );
 
     const item = {
       litros,
@@ -74,6 +69,8 @@ const Index = ({ navigation, route }) => {
       ganadero: propData?.id,
       conductor: user?.id,
       ruta: rutaActual?.id,
+      gps_lat: gpsUser?.latitude,
+      gps_long: gpsUser?.longitude,
     };
     setTimeout(() => {
       setListRecoleccionesLOCAL((listRecoleccionesLOCAL) => [
@@ -83,7 +80,7 @@ const Index = ({ navigation, route }) => {
 
       db.transaction((tx) => {
         tx.executeSql(
-          "INSERT OR IGNORE INTO recolecciones (litros, observaciones, fecha, ganadero, conductor, ruta) VALUES (?, ?, ?, ?, ?, ?);",
+          "INSERT OR IGNORE INTO recolecciones (litros, observaciones, fecha, ganadero, conductor, ruta, gps_lat, gps_long) VALUES (?, ?, ?, ?, ?, ?, ?, ?);",
           [
             item.litros,
             item.observaciones,
@@ -91,6 +88,8 @@ const Index = ({ navigation, route }) => {
             item.ganadero,
             item.conductor,
             item.ruta,
+            item.gps_lat,
+            item.gps_long,
           ],
           (tx, results) => {
             console.log("Data inserted successfully recolecciones");
@@ -150,7 +149,6 @@ const Index = ({ navigation, route }) => {
                 style={styles.input}
                 keyboardType="numeric"
                 onChangeText={(e) => setLitros(e)}
-               
               />
             </View>
 
@@ -159,9 +157,7 @@ const Index = ({ navigation, route }) => {
               <Text h5>Observaciones</Text>
             </View>
             <View style={styles.inputs_content}>
-              <Input
-                onChangeText={(e) => setObservaciones(e)}
-                             />
+              <Input onChangeText={(e) => setObservaciones(e)} />
             </View>
           </Card>
           <Overlay isVisible={dialogMessage} overlayStyle={styles.dialog}>

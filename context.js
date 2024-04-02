@@ -4,6 +4,7 @@ import axios from "axios";
 import NetInfo from "@react-native-community/netinfo";
 import moment from "moment-timezone";
 import { BASE_URL } from "./src/constants";
+import Geolocation from "@react-native-community/geolocation";
 import {
   fetchSaveGanaderos,
   fetchGetGanaderos,
@@ -40,6 +41,20 @@ const MyContextProvider = ({ children }) => {
   const [sync, setSync] = useState(false);
   const [syncMessage, setSyncMessage] = useState(null);
   const [syncLoading, setSyncLoading] = useState(false);
+  const [gpsUser, setGPSUser] = useState(null);
+
+  useEffect(() => {
+    Geolocation.getCurrentPosition(
+      (position) => {
+        setGPSUser({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        });
+      },
+      (error) => alert(error.message),
+      { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000 }
+    );
+  }, []);
 
   const verifyConnection = () => {
     NetInfo.addEventListener((state) => {
@@ -92,9 +107,9 @@ const MyContextProvider = ({ children }) => {
     };
 
     checkLogin();
-  }, [isConnected]);
+  }, []);
 
-  /* useEffect(() => {
+  useEffect(() => {
     if (user) {
       const loadData = async () => {
         await fetchGetConductores(setListConductores);
@@ -107,27 +122,35 @@ const MyContextProvider = ({ children }) => {
       fetchGetRutaActiva(setRutaActiva);
       fectGetRecolecciones(setListRecoleccionesLOCAL);
     }
-  }, [user]); */
+  }, [user]);
 
-  /*  useEffect(() => {
+  useEffect(() => {
     if (listRutas?.length && user) {
       const rs = listRutas.find((r) => parseInt(r.id) === parseInt(user?.ruta));
 
       fetchSaveRutaActual(rs);
       setRutaActual(rs);
     }
-  }, [user, listRutas, isConnected]); */
+  }, [user, listRutas]);
+
+  const [recoleccionesCreadas, setRecoleccionesCreadas] = useState({});
 
   const crearRecoleccion = async () => {
-    const url = await `${BASE_URL}/recolecciones/addRecoleccionAll.php`;
+    const url = await `${BASE_URL}/recolecciones/addRecoleccionAll2.php`;
 
     try {
       const response = await axios.post(url, listRecoleccionesLOCAL);
       if (response.status === 200) {
         fetchSaveRutaActiva(false);
         setRutaActiva(false);
+        setRecoleccionesCreadas({ type: "success" });
+      } else {
+        setRecoleccionesCreadas(false);
       }
-    } catch (error) {}
+    } catch (error) {
+      setRecoleccionesCreadas({ type: "error" });
+      console.error("Error en las solicitudes:", error);
+    }
   };
 
   const [recoleccionesByFecha, setRecoleccionesByFecha] = useState([]);
@@ -228,6 +251,9 @@ const MyContextProvider = ({ children }) => {
         syncLoading,
         fetchRoutesByDate,
         recoleccionesByFecha,
+        gpsUser,
+        recoleccionesCreadas,
+        setRecoleccionesCreadas,
       }}
     >
       {children}

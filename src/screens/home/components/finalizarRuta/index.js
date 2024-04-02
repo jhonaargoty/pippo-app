@@ -53,8 +53,6 @@ function Index({ finalizarRuta, setFinalizarRuta }) {
               fectDeleteRecolecciones(setListRecoleccionesLOCAL);
             } else {
               crearRecoleccion();
-              setRutaActiva(false);
-              fetchSaveRutaActiva(false);
             }
           }}
         />

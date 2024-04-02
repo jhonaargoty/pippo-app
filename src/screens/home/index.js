@@ -18,6 +18,7 @@ import image from "../../assets/background.png";
 
 import CarmbiarRuta from "./components/cambiarRuta";
 import FinalizarRuta from "./components/finalizarRuta";
+import FinalizarRutaEstado from "./components/finalizarRutaEstado";
 import Sync from "./components/sync";
 
 import { styles } from "./styles";
@@ -44,6 +45,8 @@ const Index = ({ navigation }) => {
     setSync,
     syncMessage,
     syncLoading,
+    recoleccionesCreadas,
+    setRecoleccionesCreadas,
   } = useMyContext();
 
   const formattedDate = moment().format("dddd D [de] MMMM");
@@ -138,17 +141,18 @@ const Index = ({ navigation }) => {
                       Hola,
                     </Text>
 
-                    {/*  {user?.nombre === "X" && (
+                    {user?.nombre === "X" && (
                       <Button
                         style={styles.button}
                         onPress={() => {
                           fectDeletesession();
                           setUser(null);
+                          navigation.navigate("Login");
                         }}
                       >
                         cerrar sesion
                       </Button>
-                    )} */}
+                    )}
                     <Text h4 style={styles.text_header}>
                       {user?.nombre || user?.usuario?.toUpperCase()}
                     </Text>
@@ -235,6 +239,11 @@ const Index = ({ navigation }) => {
                 <FinalizarRuta
                   finalizarRuta={finalizarRuta}
                   setFinalizarRuta={setFinalizarRuta}
+                />
+                <FinalizarRutaEstado
+                  open={!!Object.keys(recoleccionesCreadas).length}
+                  recoleccionesCreadas={recoleccionesCreadas}
+                  close={setRecoleccionesCreadas}
                 />
 
                 <Sync
@@ -366,21 +375,21 @@ const Index = ({ navigation }) => {
                     />
                   )}
                   {/* <Button
-              onPress={() => {
-                borrarData();
-              }}
-              buttonStyle={styles.footer_icon}
-              icon={
-                <IconF
-                  name="flag-checkered"
-                  size={20}
-                  color={colorButtons(false)}
-                />
-              }
-              title={"Borrar"}
-              iconPosition="top"
-              titleStyle={{ color: "black", fontSize: 14 }}
-            /> */}
+                    onPress={() => {
+                      borrarData();
+                    }}
+                    buttonStyle={styles.footer_icon}
+                    icon={
+                      <IconF
+                        name="flag-checkered"
+                        size={20}
+                        color={colorButtons(false)}
+                      />
+                    }
+                    title={"Borrar"}
+                    iconPosition="top"
+                    titleStyle={{ color: "black", fontSize: 14 }}
+                  /> */}
                 </View>
               </>
             )}
