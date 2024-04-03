@@ -136,7 +136,7 @@ const MyContextProvider = ({ children }) => {
   const [recoleccionesCreadas, setRecoleccionesCreadas] = useState({});
 
   const crearRecoleccion = async () => {
-    const url = await `${BASE_URL}/recolecciones/addRecoleccionAll2.php`;
+    const url = await `${BASE_URL}/recolecciones/addRecoleccionAll.php`;
 
     try {
       const response = await axios.post(url, listRecoleccionesLOCAL);
