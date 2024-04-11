@@ -5,6 +5,7 @@ import NetInfo from "@react-native-community/netinfo";
 import moment from "moment-timezone";
 import { BASE_URL } from "./src/constants";
 import Geolocation from "@react-native-community/geolocation";
+import { PermissionsAndroid } from "react-native";
 import {
   fetchSaveGanaderos,
   fetchGetGanaderos,
@@ -42,18 +43,59 @@ const MyContextProvider = ({ children }) => {
   const [syncMessage, setSyncMessage] = useState(null);
   const [syncLoading, setSyncLoading] = useState(false);
   const [gpsUser, setGPSUser] = useState(null);
+  const [hasLocationPermission, setHasLocationPermission] = useState(false);
+  const [isGPSEnabled, setIsGPSEnabled] = useState(false);
+
+  console.log("user", user);
 
   useEffect(() => {
-    Geolocation.getCurrentPosition(
-      (position) => {
-        setGPSUser({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-        });
-      },
-      (error) => alert(error.message),
-      { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000 }
-    );
+    if (parseInt(user?.tipo) === 1) {
+      const checkPermissionsAndGPS = async () => {
+        const permission = await PermissionsAndroid.check(
+          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
+        );
+        setHasLocationPermission(permission);
+
+        Geolocation.getCurrentPosition(
+          () => setIsGPSEnabled(true),
+          () => setIsGPSEnabled(false)
+        );
+      };
+
+      checkPermissionsAndGPS();
+
+      const intervalId = setInterval(() => {
+        checkPermissionsAndGPS();
+      }, 2000);
+
+      return () => {
+        clearInterval(intervalId);
+      };
+    } else {
+      setIsGPSEnabled(true);
+      setHasLocationPermission(true);
+    }
+  }, [user?.tipo]);
+
+  useEffect(() => {
+    const getLocation = async () => {
+      const permission = await checkLocationPermission();
+      setHasLocationPermission(permission);
+      if (permission) {
+        Geolocation.getCurrentPosition(
+          (position) => {
+            setGPSUser({
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+            });
+          },
+          (error) => alert(error.message),
+          { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000 }
+        );
+      }
+    };
+
+    getLocation();
   }, []);
 
   const verifyConnection = () => {
@@ -80,6 +122,7 @@ const MyContextProvider = ({ children }) => {
       const rutasResponse = await axios.get(
         `${BASE_URL}/rutas/getListRutas.php`
       );
+
       await fetchSaveRutas(rutasResponse.data);
       setListRutas(rutasResponse.data);
 
@@ -110,7 +153,7 @@ const MyContextProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
-    if (user) {
+    if (user && parseInt(user?.tipo) === 1) {
       const loadData = async () => {
         await fetchGetConductores(setListConductores);
         await fetchGetGanaderos(setListGanaderos);
@@ -121,6 +164,8 @@ const MyContextProvider = ({ children }) => {
       createDBRutaActiva();
       fetchGetRutaActiva(setRutaActiva);
       fectGetRecolecciones(setListRecoleccionesLOCAL);
+    } else if (user && parseInt(user?.tipo) === 2) {
+      fetchData();
     }
   }, [user]);
 
@@ -137,6 +182,8 @@ const MyContextProvider = ({ children }) => {
 
   const crearRecoleccion = async () => {
     const url = await `${BASE_URL}/recolecciones/addRecoleccionAll.php`;
+
+    console.log("listRecoleccionesLOCAL", listRecoleccionesLOCAL);
 
     try {
       const response = await axios.post(url, listRecoleccionesLOCAL);
@@ -160,73 +207,15 @@ const MyContextProvider = ({ children }) => {
 
     try {
       const recolecciones = await axios.get(
-        `${BASE_URL}recolecciones/getRecoleccionesByFecha.php?fechaIni=${formattedDate}&fechaFin=${formattedDate}`
+        `${BASE_URL}recolecciones_ruta/getRecoleccionesRutaByDate.php?fecha=${formattedDate}`
       );
-      const formatData = obtenerInformacionRutas(recolecciones.data);
-      setRecoleccionesByFecha(formatData);
+      setRecoleccionesByFecha(recolecciones.data);
     } catch (error) {
       setSync(true);
       setSyncMessage("Error, intente de nuevo");
       console.error("Error en las solicitudes:", error);
     }
   };
-
-  function obtenerInformacionRutas(datos) {
-    const rutas = {};
-
-    datos.forEach((dato) => {
-      const { ruta, ruta_id, conductor, conductor_id, litros } = dato;
-
-      if (!rutas[ruta]) {
-        rutas[ruta] = { ruta_id, litros: parseInt(litros) };
-      } else {
-        rutas[ruta].litros += parseInt(litros);
-      }
-
-      if (!rutas[ruta].conductores) {
-        rutas[ruta].conductores = [];
-      }
-
-      if (
-        !rutas[ruta].conductores.some((c) => c.conductor_id === conductor_id)
-      ) {
-        rutas[ruta].conductores.push({ conductor, conductor_id });
-      }
-    });
-
-    const rutasConDosConductores = Object.entries(rutas)
-      .filter(([_, info]) => info.conductores && info.conductores.length === 2)
-      .map(([ruta, info]) => {
-        const conductores = info.conductores.map((c) => ({
-          conductor: c.conductor,
-          conductor_id: c.conductor_id,
-        }));
-        return {
-          ruta,
-          ruta_id: info.ruta_id,
-          litros: info.litros,
-          conductores,
-        };
-      });
-
-    rutasConDosConductores.forEach((ruta) => delete rutas[ruta.ruta]);
-
-    const resultado = Object.entries(rutas).map(([ruta, info]) => ({
-      ruta,
-      ruta_id: info.ruta_id,
-      litros: info.litros,
-      conductores: info.conductores
-        ? info.conductores.map((c) => ({
-            conductor: c.conductor,
-            conductor_id: c.conductor_id,
-          }))
-        : undefined,
-    }));
-
-    resultado.push(...rutasConDosConductores);
-
-    return resultado;
-  }
 
   return (
     <MyContext.Provider
@@ -254,6 +243,8 @@ const MyContextProvider = ({ children }) => {
         gpsUser,
         recoleccionesCreadas,
         setRecoleccionesCreadas,
+        hasLocationPermission,
+        isGPSEnabled,
       }}
     >
       {children}

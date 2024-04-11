@@ -1,6 +1,52 @@
 import { StyleSheet } from "react-native";
 
 export const styles = StyleSheet.create({
+  button_footer_container: {
+    width: "50%",
+    marginTop: 5,
+    paddingHorizontal: 5,
+  },
+  button_footer: {
+    height: 50,
+    borderRadius: 10,
+  },
+  buttons_footer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    margin: 10,
+  },
+  aceptado: {
+    backgroundColor: "#c9f7c9",
+    paddingHorizontal: 10,
+  },
+  rechazado: {
+    backgroundColor: "#f7c9c9",
+    paddingHorizontal: 10,
+  },
+  pendiente: {
+    backgroundColor: "#f7f7c9",
+    paddingHorizontal: 10,
+  },
+  compartimientos: {
+    flexDirection: "row",
+    gap: 10,
+    marginVertical: 10,
+    paddingHorizontal: 20,
+    marginBottom: -5,
+  },
+  compartimiento_selected: {
+    backgroundColor: "#c90000",
+    borderColor: "#c90000",
+    color: "#ffffff",
+  },
+  compartimiento: {
+    borderRadius: 10,
+    borderColor: "black",
+    borderWidth: 1,
+    paddingHorizontal: 15,
+    paddingVertical: 5,
+    backgroundColor: "#ffffff",
+  },
   is_modal: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.5)",
@@ -30,7 +76,7 @@ export const styles = StyleSheet.create({
   form: {
     height: "100px",
   },
-  optionText: { textTransform: "capitalize", fontSize: 13 },
+  optionText: { textTransform: "capitalize", fontSize: 12 },
   optionTextSelect: { color: "white" },
   radio_main: {
     flexDirection: "row",
@@ -50,8 +96,20 @@ export const styles = StyleSheet.create({
     backgroundColor: "#c90000",
     borderColor: "#c90000",
   },
-
+  input_area: { fontSize: 14, fontWeight: "bold" },
+  field_input_area: {
+    height: 100,
+    width: "50%",
+    padding: 8,
+    borderStyle: "solid",
+    borderWidth: 0.2,
+    borderColor: "#000",
+    borderRadius: 5,
+    display: "flex",
+    alignItems: "left",
+  },
   field_input: {
+    height: 34,
     width: "50%",
     display: "flex",
     justifyContent: "center",
@@ -76,7 +134,7 @@ export const styles = StyleSheet.create({
     textTransform: "capitalize",
   },
   container: {
-    paddingHorizontal: 10,
+    paddingHorizontal: 5,
     paddingVertical: 5,
     flex: 1,
   },

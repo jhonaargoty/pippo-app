@@ -46,7 +46,7 @@ const Index = ({ navigation, route }) => {
       () => {
         db.transaction((tx) => {
           tx.executeSql(
-            "CREATE TABLE IF NOT EXISTS recolecciones (id INTEGER PRIMARY KEY AUTOINCREMENT, litros TEXT, observaciones TEXT, fecha TEXT, ganadero TEXT, conductor TEXT, ruta TEXT, gps_lat TEXT, gps_long TEXT);",
+            "CREATE TABLE IF NOT EXISTS recolecciones (id INTEGER PRIMARY KEY AUTOINCREMENT, litros TEXT, observaciones TEXT, fecha TEXT, hora TEXT, ganadero TEXT, conductor TEXT, ruta TEXT, gps_lat TEXT, gps_long TEXT);",
             [],
             (tx, results) => {
               console.log("Table recolecciones created successfully");
@@ -66,6 +66,7 @@ const Index = ({ navigation, route }) => {
       litros,
       observaciones,
       fecha: moment().format("YYYY-MM-DD"),
+      hora: moment().format("HH:mm"),
       ganadero: propData?.id,
       conductor: user?.id,
       ruta: rutaActual?.id,
@@ -80,11 +81,12 @@ const Index = ({ navigation, route }) => {
 
       db.transaction((tx) => {
         tx.executeSql(
-          "INSERT OR IGNORE INTO recolecciones (litros, observaciones, fecha, ganadero, conductor, ruta, gps_lat, gps_long) VALUES (?, ?, ?, ?, ?, ?, ?, ?);",
+          "INSERT OR IGNORE INTO recolecciones (litros, observaciones, fecha, hora, ganadero, conductor, ruta, gps_lat, gps_long) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);",
           [
             item.litros,
             item.observaciones,
             item.fecha,
+            item.hora,
             item.ganadero,
             item.conductor,
             item.ruta,

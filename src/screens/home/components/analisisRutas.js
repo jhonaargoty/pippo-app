@@ -60,7 +60,6 @@ function AnalisisRutas({ navigation }) {
       </Card>
 
       <Card containerStyle={styles.card_standar}>
-        {console.log("date", date)}
         <View>
           {recoleccionesByFecha?.length > 0 ? (
             <FlatList
@@ -69,7 +68,6 @@ function AnalisisRutas({ navigation }) {
               data={recoleccionesByFecha?.map((item) => {
                 return {
                   ...item,
-                  id: item.ruta_id,
                   name: item?.ruta,
                   subtitle: `${item?.litros} Lt`,
                   subtitleStyle: styles.subtitle,
@@ -83,7 +81,6 @@ function AnalisisRutas({ navigation }) {
                     navigation.navigate("Quality", {
                       propData: {
                         ...item,
-                        date: date,
                       },
                     }),
                 })

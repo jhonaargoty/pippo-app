@@ -23,8 +23,8 @@ export const conductoresLOCAL = [
     ruta: "2",
     rutas: "san carlos",
   },
-  { id: "111", nombre: "Dayan", placa: "", ruta: "5", rutas: "san marcos" },
- ];
+  { id: "11", nombre: "Dayan", placa: "", ruta: "5", rutas: "san marcos" },
+];
 
 export const usuariosLOCAL = [
   { id: "5", usuario: "adrian", password: "adrian0000", tipo: 1 },
@@ -33,7 +33,7 @@ export const usuariosLOCAL = [
   { id: "8", usuario: "wilson", password: "wilson0000", tipo: 1 },
   { id: "9", usuario: "manuel", password: "manuel0000", tipo: 1 },
   { id: "10", usuario: "danilo", password: "danilo0000", tipo: 1 },
-  { id: "111", usuario: "dayan", password: "dayan0000", tipo: 1 },
+  { id: "11", usuario: "dayan", password: "dayan0000", tipo: 1 },
   { id: "12", usuario: "octaviano", password: "octaviano0000", tipo: 1 },
   { id: "114", usuario: "calidad", password: "calidad123$", tipo: 2 },
   { id: "117", usuario: "X", password: "x", tipo: 2 },

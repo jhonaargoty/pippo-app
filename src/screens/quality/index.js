@@ -1,13 +1,14 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Keyboard,
   TextInput,
   TouchableOpacity,
-  FlatList,
   Modal,
+  ScrollView,
 } from "react-native";
-import { Text, Divider, Card, Button } from "@rneui/themed";
+import { Text, Divider, Card, Button, LinearProgress } from "@rneui/themed";
+
 import { Icon } from "react-native-elements";
 
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -25,36 +26,54 @@ import "moment/locale/es";
 
 import { BASE_URL } from "../../constants";
 
-const Index = ({ navigation, route }) => {
+const Index = ({ route }) => {
   moment.locale("es");
-  const { user } = useMyContext();
+  const { user, listRutas } = useMyContext();
   const { propData } = route.params;
 
-  const formattedDateTime = moment(propData?.date.getTime()).format(
-    "D [de] MMMM YYYY"
-  );
-
-   const [isError, setIsError] = useState(false);
+  const [isError, setIsError] = useState(false);
   const [loadingSave, setLoadingSave] = useState(false);
-  const [isModal, setIsModal] = useState(false)
+  const [isModal, setIsModal] = useState(false);
 
   const today = moment().format("YYYY-MM-DD");
+
+  const [analisisById, setAnalisisById] = useState([]);
+
+  const fetchAnalisisByIdRecolect = async (id_recoleccion) => {
+    try {
+      const recolecciones = await axios.get(
+        `${BASE_URL}analisis/getAnalisisByIDRecolect.php?id_recoleccion=${id_recoleccion}`
+      );
+      setAnalisisById(recolecciones.data);
+    } catch (error) {
+      console.error("Error en las solicitudes:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchAnalisisByIdRecolect(propData?.id);
+  }, [propData?.id]);
 
   const {
     control,
     handleSubmit,
     formState: { errors, isValid },
+    setValue,
+    reset,
   } = useForm();
 
-  const onSubmit = async (data) => {
+  const onSubmit = async (data, status) => {
     setLoadingSave(true);
     setIsError(false);
-    
 
     const body = {
+      id_recoleccion: parseInt(propData?.id),
       fecha: today,
-      ruta: propData?.id,
+      fecha_recoleccion: propData?.fecha,
+      ruta: propData?.ruta_id,
       usuario: user?.id,
+      compartimiento: compartimientoSelect,
+      observaciones: data.observaciones,
       silo: data.silo,
       temperatura: data.temperatura,
       acidez: data.acidez,
@@ -74,19 +93,32 @@ const Index = ({ navigation, route }) => {
       fosfadata: data.fosfadata,
       almidon: data.almidon,
       prueba_suero: data.prueba_suero,
+      estado: status,
     };
+
     const url = await `${BASE_URL}/analisis/addAnalisis.php`;
 
-    try {
-      const response = await axios.post(url, body);
-      if (response.status === 200) {
-    
-        setIsModal(true)
-      }
-    } catch (error) {
-           setIsError(true);
-      setIsModal(true)
-    }
+    await fetch(url, {
+      method: "POST",
+      body: JSON.stringify({
+        item: {
+          ...body,
+        },
+      }),
+    })
+      .then((response) => {
+        if (response.status === 200) {
+          setIsModal(true);
+        }
+        if (response.status === 400) {
+          setIsModal(true);
+          setIsError(true);
+        }
+      })
+      .catch((error) => {
+        setIsError(true);
+        setIsModal(true);
+      });
 
     setLoadingSave(false);
 
@@ -155,10 +187,57 @@ const Index = ({ navigation, route }) => {
       options: positivo_negativo,
       icon: "biotech",
     },
+    {
+      name: "observaciones",
+      type: "textarea",
+      icon: "sticky-note-2",
+    },
   ];
 
-  const renderItem = ({ item }) => (
-    <View style={styles.field}>
+  const [compartimientoSelect, setCompartimientoSelect] = useState(1);
+
+  const calculateCompartimiento = () => {
+    const compartimientos = [];
+    const compartimientosRuta =
+      listRutas?.find((r) => parseInt(r.id) === parseInt(propData?.ruta_id))
+        ?.compartimientos || 0;
+
+    if (compartimientosRuta > 0) {
+      for (let i = 1; i <= compartimientosRuta; i++) {
+        compartimientos.push(`Compartimiento ${i}`);
+      }
+    } else {
+      compartimientos.push("Compartimiento 1");
+    }
+
+    return compartimientos;
+  };
+
+  const getDataAnalisisCompartimiento = () => {
+    return (
+      analisisById?.find(
+        (a) => parseInt(a.compartimiento) === parseInt(compartimientoSelect)
+      ) || null
+    );
+  };
+
+  const formIsEditable = getDataAnalisisCompartimiento() ? false : true;
+
+  useEffect(() => {
+    if (!formIsEditable) {
+      Object.keys(getDataAnalisisCompartimiento()).forEach((key) => {
+        setValue(key, getDataAnalisisCompartimiento()[key]);
+      });
+    } else {
+      FORM_FIELDS.forEach((field) => {
+        setValue(field.name, "");
+      });
+      reset();
+    }
+  }, [formIsEditable]);
+
+  const renderItem = ({ item, index }) => (
+    <View style={styles.field} key={index}>
       <View style={[styles.field, styles.field_icon]}>
         <Icon size={15} name={item?.icon} />
         <Text style={styles.field_info}>{item.name.replaceAll("_", " ")}</Text>
@@ -176,6 +255,7 @@ const Index = ({ navigation, route }) => {
                   onChangeText={onChange}
                   value={value}
                   keyboardType="numeric"
+                  editable={formIsEditable}
                 />
               </View>
             );
@@ -190,6 +270,7 @@ const Index = ({ navigation, route }) => {
                       value === option?.name && styles.selectedOption,
                     ]}
                     onPress={() => onChange(option?.name)}
+                    disabled={!formIsEditable}
                   >
                     <Text
                       style={[
@@ -203,6 +284,18 @@ const Index = ({ navigation, route }) => {
                 ))}
               </View>
             );
+          } else if (item.type === "textarea") {
+            return (
+              <View style={styles.field_input_area}>
+                <TextInput
+                  style={styles.input_area}
+                  onBlur={onBlur}
+                  onChangeText={onChange}
+                  value={value}
+                  editable={formIsEditable}
+                />
+              </View>
+            );
           }
         }}
         name={item.name}
@@ -210,69 +303,120 @@ const Index = ({ navigation, route }) => {
     </View>
   );
 
-  const keyExtractor = (item, index) => `${item.name}_${index}`;
-
-  
-
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.info_navigation}>
-        <View style={styles.info_main}>
-          <View style={styles.info}>
-            <Text h3 style={styles.info_ruta}>
-              Analisis
+      <ScrollView style={{ flex: 1 }}>
+        <View style={styles.info_navigation}>
+          <View style={styles.info_main}>
+            <View style={styles.info}>
+              <Text h3 style={styles.info_ruta}>
+                Analisis
+              </Text>
+            </View>
+            <Text h4 style={styles.info_ruta}>{`Ruta: ${propData?.name}`}</Text>
+            <Text style={styles.litros}>Litros: {propData?.litros}</Text>
+            <Text h5 style={styles.date}>
+              Fecha recolección:{" "}
+              {getDataAnalisisCompartimiento()?.fecha || propData?.fecha}
+            </Text>
+            <Text h5 style={styles.date}>
+              Fecha analisis:{" "}
+              {getDataAnalisisCompartimiento()?.fecha_recoleccion || today}
+            </Text>
+            <Text h5 style={styles.date}>
+              Compartimiento: {compartimientoSelect}
+            </Text>
+            <Text
+              h5
+              style={[
+                styles.date,
+                styles[getDataAnalisisCompartimiento()?.estado || "pendiente"],
+              ]}
+            >
+              Estado: {getDataAnalisisCompartimiento()?.estado || "pendiente"}
             </Text>
           </View>
-          <Text h4 style={styles.info_ruta}>{`Ruta: ${propData?.name}`}</Text>
-          <Text h5 style={styles.date}>
-            Fecha recolección: {formattedDateTime}
-          </Text>
-          <Text style={styles.litros}>Litros: {propData?.litros}</Text>
+          <Divider />
         </View>
-        <Divider />
-      </View>
+        <View style={styles.compartimientos}>
+          {calculateCompartimiento().map((_, index) => (
+            <Button
+              buttonStyle={[
+                styles.compartimiento,
+                compartimientoSelect === index + 1 &&
+                  styles.compartimiento_selected,
+              ]}
+              key={index}
+              onPress={() => setCompartimientoSelect(index + 1)}
+            >
+              <Text
+                style={
+                  compartimientoSelect === index + 1 &&
+                  styles.compartimiento_selected
+                }
+              >
+                C/miento {index + 1}
+              </Text>
+            </Button>
+          ))}
+        </View>
 
-      <View style={styles.card_view}>
-        <Card
-          containerStyle={{
-            borderRadius: 10,
-            
-          }}
-        >
-          <FlatList
-            data={FORM_FIELDS}
-            renderItem={renderItem}
-            keyExtractor={keyExtractor}
-          />
-        </Card>
-      </View>
-      <Button
-        title={loadingSave ? "Guardando..." : "Guardar"}
-        containerStyle={{
-          width: "100%",
-          marginTop: 20,
-          paddingHorizontal: 10,
-        }}
-        buttonStyle={{ height: 50, borderRadius: 10 }}
-        titleStyle={{ marginHorizontal: 5, fontSize: 16 }}
-        color={"green"}
-        disabled={loadingSave || !isValid}
-        onPress={handleSubmit(onSubmit)}
-      />
-      <Modal animationType="slide" transparent={true} visible={isModal}>
-        <View style={styles.is_modal}>
-        <View style={styles.modal_view}>
-          <Text style={styles.modal_text} >{isError ?"! Error, intente de nuevo !" : "! Analisis guardado !"}  </Text>
-          <Button
-            title="Cerrar"
-            onPress={() => {setIsModal(false);navigation.navigate("Home") }}
-            buttonStyle={{ borderRadius: 10 }}
-            titleStyle={{ paddingHorizontal: 10, fontSize: 14 }}
-            color={"green"}
-          />
+        <View style={styles.card_view}>
+          <Card
+            containerStyle={{
+              borderRadius: 10,
+            }}
+          >
+            {FORM_FIELDS.map((item, index) => renderItem({ item, index }))}
+          </Card>
         </View>
-        </View>
-      </Modal>
+        {!getDataAnalisisCompartimiento() && (
+          <View style={styles.buttons_footer}>
+            <Button
+              title={"Aceptar"}
+              containerStyle={styles.button_footer_container}
+              buttonStyle={styles.button_footer}
+              titleStyle={{ marginHorizontal: 5, fontSize: 16 }}
+              color={"green"}
+              disabled={loadingSave || !isValid}
+              onPress={handleSubmit((data) => onSubmit(data, "aceptado"))}
+            />
+            <Button
+              title={"Rechazar"}
+              containerStyle={styles.button_footer_container}
+              buttonStyle={styles.button_footer}
+              titleStyle={{ marginHorizontal: 5, fontSize: 16 }}
+              color={"#c90000"}
+              disabled={loadingSave || !isValid}
+              onPress={handleSubmit((data) => onSubmit(data, "rechazado"))}
+            />
+          </View>
+        )}
+        <Modal animationType="slide" transparent={true} visible={isModal}>
+          <View style={styles.is_modal}>
+            <View style={styles.modal_view}>
+              <Text style={styles.modal_text}>
+                {isError
+                  ? "! Error, intente de nuevo !"
+                  : "! Analisis guardado !"}{" "}
+              </Text>
+              <Button
+                title="Cerrar"
+                onPress={() => {
+                  fetchAnalisisByIdRecolect(propData?.id);
+                  setIsModal(false);
+                }}
+                buttonStyle={{ borderRadius: 10 }}
+                titleStyle={{ paddingHorizontal: 10, fontSize: 14 }}
+                color={"green"}
+              />
+            </View>
+          </View>
+        </Modal>
+        {loadingSave && (
+          <LinearProgress style={styles.bottomView} color="red" />
+        )}
+      </ScrollView>
     </SafeAreaView>
   );
 };

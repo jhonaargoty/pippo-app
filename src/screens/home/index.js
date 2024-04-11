@@ -2,15 +2,21 @@
 /* eslint-disable no-undef */
 import React, { useState, useEffect } from "react";
 
-import { View, ImageBackground, Image, ActivityIndicator } from "react-native";
-import { Button, Text, Card, Slider, LinearProgress } from "@rneui/themed";
+import {
+  View,
+  ImageBackground,
+  Image,
+  ActivityIndicator,
+  Linking,
+} from "react-native";
+import { Text, Card, Slider, LinearProgress } from "@rneui/themed";
 import IconF from "react-native-vector-icons/FontAwesome5";
 import { Icon } from "react-native-elements";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useMyContext } from "../../../context";
 
-import { fetchSaveRutaActual, fectDeletesession } from "../../../context_const";
+import { fetchSaveRutaActual } from "../../../context_const";
 
 import moment from "moment";
 import "moment/locale/es";
@@ -25,6 +31,7 @@ import { styles } from "./styles";
 import { sumarLitros } from "../../utils/voucherDia";
 import UltimasRecolecciones from "./components/ultimasRecolecciones";
 import AnalisisRutas from "./components/analisisRutas";
+import ButtonsFooter from "./components/ButtonsFooter";
 
 const Index = ({ navigation }) => {
   moment.locale("es");
@@ -33,14 +40,10 @@ const Index = ({ navigation }) => {
     listGanaderos,
     listRutas,
     user,
-    setUser,
     setRutaActual,
     rutaActual,
     listRecoleccionesLOCAL,
     listConductores,
-    isConnected,
-    rutaActiva,
-    fetchData,
     sync,
     setSync,
     syncMessage,
@@ -101,10 +104,6 @@ const Index = ({ navigation }) => {
     setRutaActual(ruta);
   };
 
-  const colorButtons = (value) => {
-    return value ? "#b5b5b5" : "#c90000";
-  };
-
   const getIconSlider = () => {
     return (
       <View style={{ width: 100 }}>
@@ -121,6 +120,10 @@ const Index = ({ navigation }) => {
         />
       </View>
     );
+  };
+
+  const openSettings = () => {
+    Linking.openSettings();
   };
 
   return (
@@ -141,18 +144,6 @@ const Index = ({ navigation }) => {
                       Hola,
                     </Text>
 
-                    {user?.nombre === "X" && (
-                      <Button
-                        style={styles.button}
-                        onPress={() => {
-                          fectDeletesession();
-                          setUser(null);
-                          navigation.navigate("Login");
-                        }}
-                      >
-                        cerrar sesion
-                      </Button>
-                    )}
                     <Text h4 style={styles.text_header}>
                       {user?.nombre || user?.usuario?.toUpperCase()}
                     </Text>
@@ -174,7 +165,7 @@ const Index = ({ navigation }) => {
                     <Text style={styles.date}>{formattedDate}</Text>
                     <Text style={styles.date}>{formattedTime}</Text>
                   </View>
-                  {user?.tipo !== "2" && (
+                  {parseInt(user?.tipo) === 1 && (
                     <View style={styles.placas_main}>
                       <Text style={styles.placas}>{user?.placa}</Text>
                     </View>
@@ -185,7 +176,7 @@ const Index = ({ navigation }) => {
           </View>
 
           <View style={styles.flex}>
-            {user?.tipo !== "2" && (
+            {parseInt(user?.tipo) === 1 && (
               <>
                 <Card containerStyle={styles.card_standar}>
                   <View style={styles.card_route}>
@@ -259,142 +250,18 @@ const Index = ({ navigation }) => {
                   setToggleOverlay={setToggleOverlay}
                   saveRouteSelected={saveRouteSelected}
                 />
-                <View style={styles.footer}>
-                  <Button
-                    icon={
-                      <IconF
-                        name="redo-alt"
-                        size={20}
-                        color={colorButtons(!isConnected)}
-                      />
-                    }
-                    title="Sync"
-                    iconPosition="top"
-                    buttonStyle={styles.footer_icon}
-                    onPress={() => fetchData()}
-                    disabled={!isConnected || syncLoading}
-                    titleStyle={{ color: "black", fontSize: 14 }}
-                  />
-                  <Button
-                    disabled={!rutaActiva}
-                    icon={
-                      <IconF
-                        name="route"
-                        size={20}
-                        color={colorButtons(!rutaActiva)}
-                      />
-                    }
-                    title="Ruta"
-                    iconPosition="top"
-                    buttonStyle={styles.footer_icon}
-                    onPress={() => setToggleOverlay(true)}
-                    titleStyle={{ color: "black", fontSize: 14 }}
-                  />
-
-                  <Button
-                    icon={
-                      <IconF
-                        name="plus-circle"
-                        size={20}
-                        color={colorButtons(!rutaActiva)}
-                      />
-                    }
-                    title="Registro"
-                    iconPosition="top"
-                    buttonStyle={styles.footer_icon}
-                    onPress={() => navigation.navigate("Create")}
-                    disabled={!rutaActiva}
-                    titleStyle={{ color: "black", fontSize: 14 }}
-                  />
-                  {/*  <Button
-              icon={
-                <IconF
-                  name="plus-circle"
-                  size={20}
-                  color={colorButtons(!rutaActiva)}
-                />
-              }
-              title="GPS"
-              iconPosition="top"
-              buttonStyle={styles.footer_icon}
-              onPress={() => navigation.navigate("gps")}
-             
-            /> */}
-                  <Button
-                    icon={
-                      <IconF
-                        name="print"
-                        size={20}
-                        color={colorButtons(!listRecoleccionesLOCAL?.length)}
-                      />
-                    }
-                    title="Diario"
-                    iconPosition="top"
-                    buttonStyle={styles.footer_icon}
-                    onPress={() => navigation.navigate("VoucherDia")}
-                    disabled={!listRecoleccionesLOCAL?.length}
-                    titleStyle={{ color: "black", fontSize: 14 }}
-                  />
-
-                  {!rutaActiva ? (
-                    <Button
-                      onPress={() => {
-                        setFinalizarRuta(true);
-                      }}
-                      buttonStyle={styles.footer_icon}
-                      icon={
-                        <IconF
-                          name="flag-checkered"
-                          size={20}
-                          color={"green"}
-                        />
-                      }
-                      title={"Iniciar"}
-                      iconPosition="top"
-                      titleStyle={{ color: "black", fontSize: 14 }}
-                    />
-                  ) : (
-                    <Button
-                      disabled={!listRecoleccionesLOCAL?.length || !isConnected}
-                      onPress={() => {
-                        setFinalizarRuta(true);
-                      }}
-                      buttonStyle={styles.footer_icon}
-                      icon={
-                        <IconF
-                          name="flag-checkered"
-                          size={20}
-                          color={colorButtons(
-                            !listRecoleccionesLOCAL?.length || !isConnected
-                          )}
-                        />
-                      }
-                      title={"Finalizar"}
-                      iconPosition="top"
-                      titleStyle={{ color: "black", fontSize: 14 }}
-                    />
-                  )}
-                  {/* <Button
-                    onPress={() => {
-                      borrarData();
-                    }}
-                    buttonStyle={styles.footer_icon}
-                    icon={
-                      <IconF
-                        name="flag-checkered"
-                        size={20}
-                        color={colorButtons(false)}
-                      />
-                    }
-                    title={"Borrar"}
-                    iconPosition="top"
-                    titleStyle={{ color: "black", fontSize: 14 }}
-                  /> */}
-                </View>
               </>
             )}
 
-            {user?.tipo === "2" && <AnalisisRutas navigation={navigation} />}
+            {parseInt(user?.tipo) === 2 && (
+              <AnalisisRutas navigation={navigation} />
+            )}
+
+            <ButtonsFooter
+              setToggleOverlay={setToggleOverlay}
+              navigation={navigation}
+              setFinalizarRuta={setFinalizarRuta}
+            />
           </View>
         </>
       )}

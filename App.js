@@ -1,7 +1,7 @@
-import React from 'react';
-import MyContextProvider from './context';
+import React from "react";
+import MyContextProvider from "./context";
 
-import Routes from './Routes';
+import Routes from "./Routes";
 
 function App() {
   return (

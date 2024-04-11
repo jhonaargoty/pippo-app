@@ -138,12 +138,12 @@ export const fetchSaveRutas = async (rutas) => {
   rutas?.forEach((item) => {
     db.transaction((tx) => {
       tx.executeSql(
-        "CREATE TABLE IF NOT EXISTS rutas (id INTEGER PRIMARY KEY, nombre TEXT, direccion TEXT);",
+        "CREATE TABLE IF NOT EXISTS rutas (id INTEGER PRIMARY KEY, nombre TEXT, direccion TEXT, compartimientos TEXT);",
         []
       );
       tx.executeSql(
-        "INSERT OR IGNORE INTO rutas (id, nombre, direccion) VALUES (?, ?, ?)",
-        [item?.id, item?.nombre, item?.direccion]
+        "INSERT OR IGNORE INTO rutas (id, nombre, direccion, compartimientos) VALUES (?, ?, ?, ?)",
+        [item?.id, item?.nombre, item?.direccion, item?.compartimientos]
       );
     });
   });
@@ -375,3 +375,103 @@ export const fectDeletesession = async (setListRecoleccionesLOCAL) => {
     }
   );
 }); */
+
+export const borrarData = async () => {
+  // Borrar la tabla 'rutaActiva'
+  db.transaction((tx) => {
+    tx.executeSql(
+      "DROP TABLE IF EXISTS rutaActiva;",
+      [],
+      (tx, results) => {
+        console.log("Tabla rutaActiva eliminada con éxito");
+      },
+      (error) => {
+        console.log("Error al eliminar tabla rutaActiva", error.message);
+      }
+    );
+  });
+
+  // Borrar la tabla 'rutaActual'
+  db.transaction((tx) => {
+    tx.executeSql(
+      "DROP TABLE IF EXISTS rutaActual;",
+      [],
+      (tx, results) => {
+        console.log("Tabla rutaActual eliminada con éxito");
+      },
+      (error) => {
+        console.log("Error al eliminar tabla rutaActual", error.message);
+      }
+    );
+  });
+
+  // Borrar la tabla 'rutas'
+  db.transaction((tx) => {
+    tx.executeSql(
+      "DROP TABLE IF EXISTS rutas;",
+      [],
+      (tx, results) => {
+        console.log("Tabla rutas eliminada con éxito");
+      },
+      (error) => {
+        console.log("Error al eliminar tabla rutas", error.message);
+      }
+    );
+  });
+
+  // Borrar la tabla 'conductores'
+  db.transaction((tx) => {
+    tx.executeSql(
+      "DROP TABLE IF EXISTS conductores;",
+      [],
+      (tx, results) => {
+        console.log("Tabla conductores eliminada con éxito");
+      },
+      (error) => {
+        console.log("Error al eliminar tabla conductores", error.message);
+      }
+    );
+  });
+
+  // Borrar la tabla 'ganaderos'
+  db.transaction((tx) => {
+    tx.executeSql(
+      "DROP TABLE IF EXISTS ganaderos;",
+      [],
+      (tx, results) => {
+        console.log("Tabla ganaderos eliminada con éxito");
+      },
+      (error) => {
+        console.log("Error al eliminar tabla ganaderos", error.message);
+      }
+    );
+  });
+
+  // Borrar la tabla 'recolecciones'
+  db.transaction((tx) => {
+    tx.executeSql(
+      "DROP TABLE IF EXISTS recolecciones;",
+      [],
+      (tx, results) => {
+        console.log("Tabla recolecciones eliminada con éxito");
+      },
+      (error) => {
+        console.log("Error al eliminar tabla recolecciones", error.message);
+      }
+    );
+  });
+
+  // Borrar la tabla 'session'
+  db.transaction((tx) => {
+    tx.executeSql(
+      "DROP TABLE IF EXISTS session;",
+      [],
+      (tx, results) => {
+        console.log("Tabla session eliminada con éxito");
+      },
+      (error) => {
+        console.log("Error al eliminar tabla session", error.message);
+      }
+    );
+  });
+};

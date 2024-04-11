@@ -75,13 +75,14 @@ const Index = ({ navigation }) => {
     const url = `${BASE_URL}/login/login.php`;
     setLoading(true);
 
-    if (!isConnected) {
+    if (isConnected) {
       await axios
         .post(url, {
           user: inUser,
           password,
         })
         .then((response) => {
+          console.log("response", response?.data);
           if (response?.status === 200) {
             const user = {
               id: response?.data?.id,
