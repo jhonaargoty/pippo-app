@@ -31,11 +31,18 @@ const Index = ({ navigation }) => {
 
   useEffect(() => {
     setLoading(true);
-    setGanaderosByRuta(
-      listGanaderos?.filter(
-        (gl) => parseInt(gl.ruta) === parseInt(rutaActual?.id)
-      )
+
+    const filterGanaderosByRuta = listGanaderos?.filter(
+      (gl) => parseInt(gl.ruta) === parseInt(rutaActual?.id)
     );
+
+    if (filterGanaderosByRuta) {
+      filterGanaderosByRuta.sort((a, b) => {
+        return parseInt(a.orden) - parseInt(b.orden);
+      });
+    }
+
+    setGanaderosByRuta(filterGanaderosByRuta);
     setLoading(false);
   }, [listGanaderos, rutaActual]);
 

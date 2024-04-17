@@ -2,13 +2,7 @@
 /* eslint-disable no-undef */
 import React, { useState, useEffect } from "react";
 
-import {
-  View,
-  ImageBackground,
-  Image,
-  ActivityIndicator,
-  Linking,
-} from "react-native";
+import { View, ImageBackground, Image, ActivityIndicator } from "react-native";
 import { Text, Card, Slider, LinearProgress } from "@rneui/themed";
 import IconF from "react-native-vector-icons/FontAwesome5";
 import { Icon } from "react-native-elements";
@@ -22,7 +16,7 @@ import moment from "moment";
 import "moment/locale/es";
 import image from "../../assets/background.png";
 
-import CarmbiarRuta from "./components/cambiarRuta";
+import CambiarRuta from "./components/cambiarRuta";
 import FinalizarRuta from "./components/finalizarRuta";
 import FinalizarRutaEstado from "./components/finalizarRutaEstado";
 import Sync from "./components/sync";
@@ -120,10 +114,6 @@ const Index = ({ navigation }) => {
         />
       </View>
     );
-  };
-
-  const openSettings = () => {
-    Linking.openSettings();
   };
 
   return (
@@ -244,7 +234,7 @@ const Index = ({ navigation }) => {
                   loading={syncLoading}
                 />
 
-                <CarmbiarRuta
+                <CambiarRuta
                   toggleOverlay={toggleOverlay}
                   listRutas={listRutas}
                   setToggleOverlay={setToggleOverlay}
@@ -253,7 +243,7 @@ const Index = ({ navigation }) => {
               </>
             )}
 
-            {parseInt(user?.tipo) === 2 && (
+            {(parseInt(user?.tipo) === 2 || parseInt(user?.tipo) === 3) && (
               <AnalisisRutas navigation={navigation} />
             )}
 

@@ -201,10 +201,12 @@ const MyContextProvider = ({ children }) => {
   };
 
   const [recoleccionesByFecha, setRecoleccionesByFecha] = useState([]);
+  const [loadRecoleccionesByFecha, setLoadRecoleccionesByFecha] =
+    useState(false);
 
   const fetchRoutesByDate = async (date) => {
     const formattedDate = moment(date).format("YYYY-MM-DD");
-
+    setLoadRecoleccionesByFecha(true);
     try {
       const recolecciones = await axios.get(
         `${BASE_URL}recolecciones_ruta/getRecoleccionesRutaByDate.php?fecha=${formattedDate}`
@@ -215,6 +217,7 @@ const MyContextProvider = ({ children }) => {
       setSyncMessage("Error, intente de nuevo");
       console.error("Error en las solicitudes:", error);
     }
+    setLoadRecoleccionesByFecha(false);
   };
 
   return (
@@ -245,6 +248,7 @@ const MyContextProvider = ({ children }) => {
         setRecoleccionesCreadas,
         hasLocationPermission,
         isGPSEnabled,
+        loadRecoleccionesByFecha,
       }}
     >
       {children}

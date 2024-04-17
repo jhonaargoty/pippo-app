@@ -13,7 +13,8 @@ import moment from "moment";
 import { styles } from "../styles";
 
 function AnalisisRutas({ navigation }) {
-  const { fetchRoutesByDate, recoleccionesByFecha } = useMyContext();
+  const { fetchRoutesByDate, recoleccionesByFecha, loadRecoleccionesByFecha } =
+    useMyContext();
 
   const [date, setDate] = useState(new Date());
   const [showPicker, setShowPicker] = useState(false);
@@ -61,7 +62,12 @@ function AnalisisRutas({ navigation }) {
 
       <Card containerStyle={styles.card_standar}>
         <View>
-          {recoleccionesByFecha?.length > 0 ? (
+          {loadRecoleccionesByFecha ? (
+            <View style={styles.not_data}>
+              <IconF1 name="warning" size={25} />
+              <Text>Buscando...</Text>
+            </View>
+          ) : recoleccionesByFecha?.length > 0 ? (
             <FlatList
               style={{ height: "auto" }}
               keyExtractor={keyExtractor}

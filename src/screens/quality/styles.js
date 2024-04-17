@@ -1,6 +1,16 @@
 import { StyleSheet } from "react-native";
 
 export const styles = StyleSheet.create({
+  loading: {
+    flex: 1,
+    justifyContent: "center",
+  },
+  loading_text: {
+    display: "flex",
+    justifyContent: "center",
+    textAlign: "center",
+    fontSize: 20,
+  },
   button_footer_container: {
     width: "50%",
     marginTop: 5,
@@ -14,6 +24,13 @@ export const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     margin: 10,
+    marginVertical: 10,
+  },
+  buttons_footer_update: {
+    flexDirection: "row",
+    justifyContent: "center",
+    margin: 10,
+    marginVertical: 10,
   },
   aceptado: {
     backgroundColor: "#c9f7c9",
