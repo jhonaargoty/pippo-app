@@ -38,6 +38,7 @@ function Form({
     setIsError(false);
 
     const body = {
+      ...(toUpdated && { id: analisisFormData.analisis_id }),
       id_recoleccion: parseInt(propData?.id),
       fecha: today,
       fecha_recoleccion: propData?.fecha,
@@ -53,7 +54,7 @@ function Form({
       densidad: data.densidad,
       grasa: data.grasa,
       proteina: data.proteina,
-      ciloscopia: data.crioscopia,
+      crioscopia: data.crioscopia,
       antibiotico: data.antibiotico,
       solidos_no_grasos: data.solidos_no_grasos,
       solidos_totales: data.solidos_totales,
@@ -71,7 +72,7 @@ function Form({
     const urlPut = await `${BASE_URL}/analisis/updateAnalisis.php`;
 
     await fetch(toUpdated ? urlPut : url, {
-      method: toUpdated ? "PUT" : "POST",
+      method: "POST",
       body: JSON.stringify({
         item: {
           ...body,
@@ -79,7 +80,6 @@ function Form({
       }),
     })
       .then((response) => {
-        console.log("response", response);
         if (response.status === 200) {
           setIsModal(true);
         }
@@ -192,7 +192,7 @@ function Form({
         control={control}
         rules={{ required: item.type === "textarea" ? false : true }}
         render={({ field: { onChange, onBlur, value } }) => {
-          if (item.type === "text") {
+          if (item.type === "text" || item.type === "number") {
             return (
               <View style={styles.field_input}>
                 <TextInput
@@ -200,7 +200,7 @@ function Form({
                   onBlur={onBlur}
                   onChangeText={onChange}
                   value={value}
-                  keyboardType="numeric"
+                  keyboardType="text"
                   editable={formIsEditable || isEditor}
                 />
               </View>
