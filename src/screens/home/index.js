@@ -3,18 +3,21 @@
 import React, { useState, useEffect } from "react";
 
 import { View, ImageBackground, Image, ActivityIndicator } from "react-native";
-import { Text, Card, Slider, LinearProgress } from "@rneui/themed";
+import { Text, Card, Slider, LinearProgress, Button } from "@rneui/themed";
 import IconF from "react-native-vector-icons/FontAwesome5";
 import { Icon } from "react-native-elements";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useMyContext } from "../../../context";
 
-import { fetchSaveRutaActual } from "../../../context_const";
+import {
+  fetchSaveRutaActual,
+  fectDeletesession,
+  borrarData,
+} from "../../../context_const";
 
 import moment from "moment";
 import "moment/locale/es";
-import image from "../../assets/background.png";
 
 import CambiarRuta from "./components/cambiarRuta";
 import FinalizarRuta from "./components/finalizarRuta";
@@ -26,6 +29,7 @@ import { sumarLitros } from "../../utils/voucherDia";
 import UltimasRecolecciones from "./components/ultimasRecolecciones";
 import AnalisisRutas from "./components/analisisRutas";
 import ButtonsFooter from "./components/ButtonsFooter";
+import Header from "./components/header";
 
 const Index = ({ navigation }) => {
   moment.locale("es");
@@ -44,10 +48,8 @@ const Index = ({ navigation }) => {
     syncLoading,
     recoleccionesCreadas,
     setRecoleccionesCreadas,
+    setUser,
   } = useMyContext();
-
-  const formattedDate = moment().format("dddd D [de] MMMM");
-  const formattedTime = moment().format("HH:mm");
 
   const [toggleOverlay, setToggleOverlay] = useState(false);
   const [percentage, setPercentage] = useState(0);
@@ -125,48 +127,10 @@ const Index = ({ navigation }) => {
         </View>
       ) : (
         <>
-          <View style={styles.container_info}>
-            <ImageBackground source={image}>
-              <View style={styles.container_info_content}>
-                <View style={styles.info}>
-                  <View>
-                    <Text h3 style={styles.text_header}>
-                      Hola,
-                    </Text>
-
-                    <Text h4 style={styles.text_header}>
-                      {user?.nombre || user?.usuario?.toUpperCase()}
-                    </Text>
-                  </View>
-                  <View style={styles.info_icon_logos}>
-                    <Image
-                      style={styles.logo}
-                      source={require("../../assets/lola.png")}
-                    />
-                    <Image
-                      style={styles.logo_pippo}
-                      source={require("../../assets/logo_pipo.png")}
-                    />
-                  </View>
-                </View>
-
-                <View style={styles.date_placas}>
-                  <View style={styles.date_time}>
-                    <Text style={styles.date}>{formattedDate}</Text>
-                    <Text style={styles.date}>{formattedTime}</Text>
-                  </View>
-                  {parseInt(user?.tipo) === 1 && (
-                    <View style={styles.placas_main}>
-                      <Text style={styles.placas}>{user?.placa}</Text>
-                    </View>
-                  )}
-                </View>
-              </View>
-            </ImageBackground>
-          </View>
+          <Header navigation={navigation} />
 
           <View style={styles.flex}>
-            {parseInt(user?.tipo) === 1 && (
+            {user?.tipo === 1 && (
               <>
                 <Card containerStyle={styles.card_standar}>
                   <View style={styles.card_route}>
@@ -243,7 +207,7 @@ const Index = ({ navigation }) => {
               </>
             )}
 
-            {(parseInt(user?.tipo) === 2 || parseInt(user?.tipo) === 3) && (
+            {(user?.tipo === 2 || user?.tipo === 3) && (
               <AnalisisRutas navigation={navigation} />
             )}
 

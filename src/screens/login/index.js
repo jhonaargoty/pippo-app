@@ -89,7 +89,7 @@ const Index = ({ navigation }) => {
               nombre: response?.data?.nombre || response?.data?.usuario,
               placa: response?.data?.placa,
               ruta: response?.data?.ruta,
-              tipo: response?.data?.tipo,
+              tipo: parseInt(response?.data?.tipo),
             };
 
             loginUser(user);
@@ -103,6 +103,7 @@ const Index = ({ navigation }) => {
       const usuarioTemp = usuariosLOCAL.find(
         (u) => u.usuario === inUser && u.password === password
       );
+
       if (usuarioTemp) {
         if (usuarioTemp.tipo === 1) {
           const usuarioConductor = conductoresLOCAL.find(
@@ -113,7 +114,7 @@ const Index = ({ navigation }) => {
             nombre: usuarioConductor.nombre,
             placa: usuarioConductor.placa,
             ruta: usuarioConductor.ruta,
-            tipo: "1",
+            tipo: 1,
           };
           loginUser(user);
           setUser(user);

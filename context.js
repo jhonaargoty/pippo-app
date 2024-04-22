@@ -49,7 +49,7 @@ const MyContextProvider = ({ children }) => {
   console.log("user", user);
 
   useEffect(() => {
-    if (parseInt(user?.tipo) === 1) {
+    if (user?.tipo === 1) {
       const checkPermissionsAndGPS = async () => {
         const permission = await PermissionsAndroid.check(
           PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
@@ -153,7 +153,7 @@ const MyContextProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
-    if (user && parseInt(user?.tipo) === 1) {
+    if (user && user?.tipo === 1) {
       const loadData = async () => {
         await fetchGetConductores(setListConductores);
         await fetchGetGanaderos(setListGanaderos);
@@ -164,7 +164,7 @@ const MyContextProvider = ({ children }) => {
       createDBRutaActiva();
       fetchGetRutaActiva(setRutaActiva);
       fectGetRecolecciones(setListRecoleccionesLOCAL);
-    } else if (user && parseInt(user?.tipo) === 2) {
+    } else if (user && user?.tipo === 2) {
       fetchData();
     }
   }, [user]);

@@ -6,7 +6,6 @@ import { styles } from "../styles";
 import IconF from "react-native-vector-icons/FontAwesome5";
 
 import { useMyContext } from "../../../../context";
-import { fectDeletesession, borrarData } from "../../../../context_const";
 
 function ButtonsFooter({ setToggleOverlay, navigation, setFinalizarRuta }) {
   const {
@@ -16,7 +15,6 @@ function ButtonsFooter({ setToggleOverlay, navigation, setFinalizarRuta }) {
     fetchData,
     syncLoading,
     user,
-    setUser,
   } = useMyContext();
 
   const colorButtons = (value) => {
@@ -24,7 +22,7 @@ function ButtonsFooter({ setToggleOverlay, navigation, setFinalizarRuta }) {
   };
   return (
     <View style={styles.footer}>
-      {parseInt(user?.tipo) === 1 && (
+      {user?.tipo === 1 && (
         <>
           <Button
             icon={
@@ -117,31 +115,6 @@ function ButtonsFooter({ setToggleOverlay, navigation, setFinalizarRuta }) {
               titleStyle={{ color: "black", fontSize: 14 }}
             />
           )}
-        </>
-      )}
-      {user?.nombre === "X" && (
-        <>
-          <Button
-            title="DELETE DATA"
-            onPress={() => {
-              borrarData();
-              setUser(null);
-              navigation.navigate("Login");
-            }}
-          />
-          <Button
-            title="CERRAR SESION"
-            onPress={() => {
-              fectDeletesession();
-              setUser(null);
-              navigation.navigate("Login");
-            }}
-          />
-          <Button
-            title="Sync"
-            onPress={() => fetchData()}
-            disabled={!isConnected || syncLoading}
-          />
         </>
       )}
     </View>
