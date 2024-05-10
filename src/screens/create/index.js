@@ -10,24 +10,21 @@ import { Text, Divider } from "@rneui/themed";
 import { Icon } from "react-native-elements";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { keyExtractor, renderItem } from "../../utils";
+import { renderItem } from "../../utils";
 import { useMyContext } from "../../../context";
 
 import moment from "moment";
 import "moment/locale/es";
 
 const Index = ({ navigation }) => {
-  const {
-    listGanaderos,
-    rutaActual,
-    listRecoleccionesLOCAL,
-    listConductores,
-    listRutas,
-  } = useMyContext();
-  const [ganaderosByRuta, setGanaderosByRuta] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { listGanaderos, rutaActual, listRecoleccionesLOCAL } = useMyContext();
+
   moment.locale("es");
   const formattedDateTime = moment().format("dddd D [de] MMMM : HH:mm");
+
+  const [loading, setLoading] = useState(true);
+  const [ganaderosByRutaFilter, setGanaderosByRutaFilter] = useState([]);
+  const [ganaderosByRuta, setGanaderosByRuta] = useState([]);
 
   useEffect(() => {
     setLoading(true);
@@ -43,71 +40,43 @@ const Index = ({ navigation }) => {
     }
 
     setGanaderosByRuta(filterGanaderosByRuta);
+    setGanaderosByRutaFilter(filterGanaderosByRuta);
     setLoading(false);
-  }, [listGanaderos, rutaActual]);
-
-  const [recolecciones, setRecolecciones] = useState([]);
-
-  useEffect(() => {
-    let newData = [];
-
-    listRecoleccionesLOCAL?.forEach((item) => {
-      let newItem = { ...item };
-
-      newItem.conductor = listConductores.find(
-        (c) => parseInt(c.id) === parseInt(item.conductor)
-      )?.nombre;
-
-      newItem.ganadero_documento = listGanaderos.find(
-        (c) => parseInt(c.id) === parseInt(item.ganadero)
-      )?.documento;
-      newItem.ganadero = listGanaderos.find(
-        (c) => parseInt(c.id) === parseInt(item.ganadero)
-      )?.nombre;
-      newItem.ganadero_id = listGanaderos.find(
-        (c) => parseInt(c.id) === parseInt(item.ganadero)
-      )?.id;
-      newItem.ruta = listRutas.find(
-        (r) => parseInt(r.id) === parseInt(item.ruta)
-      )?.nombre;
-
-      newItem.conductor_id = parseInt(item.conductor);
-      newData.push(newItem);
-
-      setRecolecciones((recolecciones) => [...recolecciones, ...newData]);
-    });
   }, []);
 
   const existRecolet = (item) => {
-    return !!recolecciones?.find(
-      (r) => parseInt(r?.ganadero_id) === parseInt(item.id)
+    return !!listRecoleccionesLOCAL?.find(
+      (r) => parseInt(r?.ganadero) === parseInt(item.id)
     );
   };
 
   const onPressItem = (item) => {
-    const data = existRecolet(item)
-      ? recolecciones?.find(
-          (r) => parseInt(r?.ganadero_id) === parseInt(item.id)
-        )
-      : item;
-
     const destination = existRecolet(item) ? "Print" : "Form";
-    navigation.navigate(destination, { propData: data });
+    navigation.navigate(destination, { propData: item });
   };
-
-  const [ganaderosByRutaFilter, setGanaderosByRutaFilter] =
-    useState(ganaderosByRuta);
-
-  useEffect(() => {
-    setGanaderosByRutaFilter(ganaderosByRuta);
-  }, [ganaderosByRuta]);
 
   const search = (item) => {
     const newData = ganaderosByRuta?.filter((gl) =>
       gl.nombre.includes(item.toUpperCase())
     );
-
     setGanaderosByRutaFilter(newData);
+  };
+
+  const renderListGanaderosExists = () => {
+    let newList = [];
+
+    ganaderosByRutaFilter?.forEach((item) => {
+      if (!existRecolet(item)) {
+        newList.push(item);
+      }
+    });
+    ganaderosByRutaFilter?.forEach((item) => {
+      if (existRecolet(item)) {
+        newList.push(item);
+      }
+    });
+
+    return newList;
   };
 
   return (
@@ -144,11 +113,12 @@ const Index = ({ navigation }) => {
           </View>
           <View style={styles.list}>
             <FlatList
-              keyExtractor={keyExtractor}
-              data={ganaderosByRutaFilter?.map((item) => {
+              keyExtractor={(item) => item.id.toString()}
+              data={renderListGanaderosExists()?.map((item) => {
                 return {
                   ...item,
                   name: item.nombre,
+                  nameStyle: styles.name_ganadero,
                 };
               })}
               renderItem={({ item }) =>
@@ -158,6 +128,7 @@ const Index = ({ navigation }) => {
                     name: "check-circle",
                     color: "green",
                   },
+                  iconSize: 15,
                   onPress: () => {
                     onPressItem(item);
                   },
@@ -214,7 +185,6 @@ const styles = StyleSheet.create({
   info_navigation: {
     flexDirection: "row",
     alignItems: "center",
-    /* marginRight: 50, */
   },
   info_main: {
     alignItems: "center",
@@ -223,6 +193,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   info_ruta: { textTransform: "capitalize" },
+  name_ganadero: { textTransform: "capitalize" },
 });
 
 export default Index;

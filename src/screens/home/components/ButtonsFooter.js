@@ -22,7 +22,7 @@ function ButtonsFooter({ setToggleOverlay, navigation, setFinalizarRuta }) {
   };
   return (
     <View style={styles.footer}>
-      {user?.tipo === 1 && (
+      {parseInt(user?.tipo) === 1 && (
         <>
           <Button
             icon={
@@ -40,16 +40,24 @@ function ButtonsFooter({ setToggleOverlay, navigation, setFinalizarRuta }) {
             titleStyle={{ color: "black", fontSize: 14 }}
           />
           <Button
-            disabled={!rutaActiva}
-            icon={
-              <IconF name="route" size={20} color={colorButtons(!rutaActiva)} />
-            }
+            /*  disabled={!rutaActiva} */
+            icon={<IconF name="route" size={20} color={colorButtons(false)} />}
             title="Ruta"
             iconPosition="top"
             buttonStyle={styles.footer_icon}
             onPress={() => setToggleOverlay(true)}
             titleStyle={{ color: "black", fontSize: 14 }}
           />
+          {/* <Button
+            icon={
+              <IconF name="route" size={20} color={colorButtons(!rutaActiva)} />
+            }
+            title="GPS"
+            iconPosition="top"
+            buttonStyle={styles.footer_icon}
+            onPress={() => navigation.navigate("gps")}
+            titleStyle={{ color: "black", fontSize: 14 }}
+          /> */}
 
           <Button
             icon={

@@ -165,7 +165,7 @@ function Form({
   ];
 
   const formIsEditable = analisisFormData ? false : true;
-  const isEditor = user?.tipo === 3 ? true : false;
+  const isEditor = parseInt(user?.tipo) === 3 ? true : false;
 
   useEffect(() => {
     reset();

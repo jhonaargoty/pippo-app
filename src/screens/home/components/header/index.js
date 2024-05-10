@@ -59,7 +59,7 @@ function Index({ navigation }) {
               <Text style={styles.date}>{formattedDate}</Text>
               <Text style={styles.date}>{formattedTime}</Text>
             </View>
-            {user?.tipo === 1 && (
+            {parseInt(user?.tipo) === 1 && (
               <View style={styles.placas_main}>
                 <Text style={styles.placas}>{user?.placa}</Text>
               </View>

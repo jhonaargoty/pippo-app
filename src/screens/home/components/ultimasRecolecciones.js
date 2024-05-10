@@ -4,18 +4,14 @@ import { Text, Card } from "@rneui/themed";
 import { View, FlatList } from "react-native";
 import IconF1 from "react-native-vector-icons/FontAwesome";
 
-import { keyExtractor, renderItem } from "../../../utils";
+import { renderItem } from "../../../utils";
 
 import { styles } from "../styles";
 
 function UltimasRecolecciones({
   listRecoleccionesLOCAL,
   listGanaderos,
-  listConductores,
-  user,
   navigation,
-  rutaActual,
-  listRutas,
 }) {
   return (
     <Card
@@ -32,7 +28,7 @@ function UltimasRecolecciones({
       {listRecoleccionesLOCAL?.length ? (
         <FlatList
           style={{ height: "auto" }}
-          keyExtractor={keyExtractor}
+          keyExtractor={(item) => item.id}
           data={listRecoleccionesLOCAL?.map((item) => {
             return {
               ...item,
@@ -42,7 +38,7 @@ function UltimasRecolecciones({
                   parseInt(c.id) === parseInt(item.ganadero) ||
                   parseInt(c.id) === parseInt(item.ganadero_id)
               )?.nombre,
-              subtitle: item?.fecha,
+              subtitle: `Litros: ${item.litros}`,
               subtitleStyle: styles.subtitle,
               nameStyle: styles.last_title_name,
             };
@@ -52,24 +48,7 @@ function UltimasRecolecciones({
               item,
               onPress: () =>
                 navigation.navigate("Print", {
-                  propData: {
-                    litros: item.litros,
-                    observaciones: item.observaciones,
-                    fecha: item.fecha,
-                    ganadero: listGanaderos.find(
-                      (g) => parseInt(g.id) === parseInt(item.ganadero)
-                    ).nombre,
-                    conductor: listConductores.find(
-                      (g) => parseInt(g.id) === parseInt(user?.id)
-                    ).nombre,
-                    ruta: listRutas.find(
-                      (r) => parseInt(r.id) === parseInt(rutaActual.id)
-                    ).nombre,
-                    conductor_id: parseInt(user?.id),
-                    ganadero_documento: listGanaderos.find(
-                      (g) => parseInt(g.id) === parseInt(item.ganadero)
-                    ).documento,
-                  },
+                  propData: { id: item.ganadero },
                 }),
             })
           }

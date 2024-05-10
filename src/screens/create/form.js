@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { StyleSheet, View, KeyboardAvoidingView, Keyboard } from "react-native";
 import { Text, Divider, Input, Card, Button, Overlay } from "@rneui/themed";
 import { Icon } from "react-native-elements";
@@ -10,15 +10,8 @@ import moment from "moment";
 import "moment/locale/es";
 
 const Index = ({ navigation, route }) => {
-  const {
-    rutaActual,
-    user,
-    setListRecoleccionesLOCAL,
-    listGanaderos,
-    listConductores,
-    listRutas,
-    gpsUser,
-  } = useMyContext();
+  const { rutaActual, user, setListRecoleccionesLOCAL, gpsUser } =
+    useMyContext();
 
   moment.locale("es");
 
@@ -197,24 +190,7 @@ const Index = ({ navigation, route }) => {
                       onPress={() => {
                         setDialogMessage(false);
                         navigation.navigate("Print", {
-                          propData: {
-                            litros: litros,
-                            observaciones: observaciones,
-                            fecha: moment().format("YYYY-MM-DD HH:mm:ss"),
-                            ganadero: listGanaderos.find(
-                              (g) => parseInt(g.id) === parseInt(propData.id)
-                            ).nombre,
-                            conductor: listConductores.find(
-                              (g) => parseInt(g.id) === parseInt(user?.id)
-                            ).nombre,
-                            ruta: listRutas.find(
-                              (r) => parseInt(r.id) === parseInt(rutaActual.id)
-                            ).nombre,
-                            conductor_id: parseInt(user?.id),
-                            ganadero_documento: listGanaderos.find(
-                              (g) => parseInt(g.id) === parseInt(propData.id)
-                            )?.documento,
-                          },
+                          propData,
                         });
                       }}
                     />

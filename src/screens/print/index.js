@@ -1,15 +1,43 @@
 import React, { useEffect } from "react";
-import { StyleSheet, View } from "react-native";
-import { Text, Divider, Button, Overlay } from "@rneui/themed";
+import { StyleSheet, View, BackHandler } from "react-native";
+import { Text, Divider, Button } from "@rneui/themed";
 import { Icon } from "react-native-elements";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useMyContext } from "../../../context";
 import ThermalPrinterModule from "react-native-thermal-printer";
 import { PermissionsAndroid } from "react-native";
+import { useState } from "react";
 
 const Index = ({ navigation, route }) => {
-  const { listConductores } = useMyContext();
+  const { listConductores, listRecoleccionesLOCAL, listGanaderos } =
+    useMyContext();
   const { propData } = route.params;
+
+  console.log("propData", propData);
+
+  const [filterRecolet, setFilterRecolet] = useState(null);
+
+  useEffect(() => {
+    const newData = listRecoleccionesLOCAL.find(
+      (item) => parseInt(item.ganadero) === parseInt(propData?.id)
+    );
+
+    const ganaderoFilter = listGanaderos.find(
+      (item) => parseInt(item.id) === parseInt(propData?.id)
+    );
+
+    const conductorFilter = listConductores.find(
+      (item) => parseInt(item.id) === parseInt(newData?.conductor)
+    );
+
+    setFilterRecolet({
+      ...newData,
+      ...ganaderoFilter,
+      ...conductorFilter,
+      nombre_ganadero: ganaderoFilter?.nombre,
+      nombre_conductor: conductorFilter?.nombre,
+    });
+  }, [propData]);
 
   const requestBluetoothScanPermission = async () => {
     try {
@@ -98,23 +126,19 @@ const Index = ({ navigation, route }) => {
       receiptContent += "[C]      Guasca - Cundinamarca\n";
       receiptContent += "[C]   gerencia@alimentospippo.com\n";
       receiptContent += "[C]      Recibo de recoleccion\n";
-      receiptContent += `[C]      Fecha: ${propData?.fecha}\n`;
+      receiptContent += `[C]      Fecha: ${filterRecolet?.fecha}\n`;
       receiptContent += "----------------------\n";
-      receiptContent += `[C]Ruta: ${propData?.ruta?.toUpperCase()}\n`;
+      receiptContent += `[C]Ruta: ${filterRecolet?.ruta_nombre?.toUpperCase()}\n`;
       receiptContent += `[C]Ganadero:\n`;
-      receiptContent += `[C]${propData?.ganadero}\n`;
-      receiptContent += `[C]Documento: ${propData?.ganadero_documento}\n`;
+      receiptContent += `[C]${filterRecolet?.nombre_ganadero}\n`;
+      receiptContent += `[C]Documento: ${filterRecolet?.documento}\n`;
       receiptContent += "----------------------\n";
-      receiptContent += `[C]Litros: ${propData?.litros || "-"}\n`;
+      receiptContent += `[C]Litros: ${filterRecolet?.litros || "-"}\n`;
       receiptContent += `[C]Observaciones:\n`;
-      receiptContent += `[C]${propData?.observaciones || "Ninguna"}\n`;
+      receiptContent += `[C]${filterRecolet?.observaciones || "Ninguna"}\n`;
       receiptContent += "----------------------\n";
-      receiptContent += `[C]Recolectado por: ${propData?.conductor}\n`;
-      receiptContent += `[C]Placas: ${
-        listConductores.find(
-          (c) => parseInt(c.id) === parseInt(propData?.conductor_id)
-        )?.placa
-      }\n\n\n`;
+      receiptContent += `[C]Recolectado por: ${filterRecolet?.nombre_conductor}\n`;
+      receiptContent += `[C]Placas: ${filterRecolet?.placa}\n\n\n`;
 
       await ThermalPrinterModule.printBluetooth({
         payload: receiptContent,
@@ -126,12 +150,20 @@ const Index = ({ navigation, route }) => {
     }
   };
 
-  console.log(
-    "propData",
-    listConductores.find(
-      (c) => parseInt(c.id) === parseInt(propData?.conductor_id)
-    )?.placa
-  );
+  useEffect(() => {
+    const backAction = () => {
+      navigation.popToTop();
+      return true;
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      "hardwareBackPress",
+      backAction
+    );
+
+    return () => backHandler.remove();
+  }, []);
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.info_navigation}>
@@ -152,7 +184,7 @@ const Index = ({ navigation, route }) => {
         </View>
         <View style={styles.info_pippo}>
           <Text style={styles.recibo}>Recibo de recolección</Text>
-          <Text>{`Fecha: ${propData?.fecha}`}</Text>
+          <Text>{`Fecha: ${filterRecolet?.fecha}`}</Text>
         </View>
         <Divider style={styles.dividier} />
 
@@ -160,30 +192,32 @@ const Index = ({ navigation, route }) => {
           <View>
             <View style={styles.item}>
               <Text style={styles.item_desc}>Ruta:</Text>
-              <Text style={styles.capitalize}>{propData?.ruta}</Text>
+              <Text style={styles.capitalize}>
+                {filterRecolet?.ruta_nombre}
+              </Text>
             </View>
             <View style={styles.item_ganadero}>
               <Text style={styles.item_desc}>Ganadero: </Text>
             </View>
             <View style={styles.item_ganadero}>
-              <Text>{propData?.ganadero}</Text>
+              <Text>{filterRecolet?.nombre_ganadero}</Text>
             </View>
             <View style={styles.item}>
               <Text style={styles.item_desc}>Documento: </Text>
-              <Text>{propData?.ganadero_documento}</Text>
+              <Text>{filterRecolet?.documento}</Text>
             </View>
           </View>
           <View>
             <View style={styles.item}>
               <Text style={styles.item_imp}>Litros</Text>
               <Text style={styles.item_imp_desc}>
-                {propData?.litros || "-"}
+                {filterRecolet?.litros || "-"}
               </Text>
             </View>
             <View style={styles.item}>
               <Text style={styles.item_imp}>Observaciones</Text>
               <Text style={styles.item_imp_desc}>
-                {propData?.observaciones || "Ninguna"}
+                {filterRecolet?.observaciones || "Ninguna"}
               </Text>
             </View>
           </View>
@@ -193,17 +227,11 @@ const Index = ({ navigation, route }) => {
         <View style={styles.condc}>
           <View style={styles.item_cond}>
             <Text style={styles.item_desc}>Recolectado por:</Text>
-            <Text>{propData?.conductor}</Text>
+            <Text>{filterRecolet?.nombre_conductor}</Text>
           </View>
           <View style={styles.item_cond}>
             <Text style={styles.item_desc}>Placas:</Text>
-            <Text>
-              {
-                listConductores?.find(
-                  (lc) => parseInt(lc.id) === parseInt(propData?.conductor_id)
-                )?.placa
-              }
-            </Text>
+            <Text>{filterRecolet?.placa}</Text>
           </View>
         </View>
       </View>
@@ -286,6 +314,7 @@ const styles = StyleSheet.create({
     gap: 5,
     alignItems: "center",
     flexWrap: "wrap",
+    textTransform: "capitalize",
   },
   dividier: { marginTop: -15 },
   main: {

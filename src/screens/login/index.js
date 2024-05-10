@@ -15,7 +15,7 @@ const Index = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
   const [errorLogin, setErrorlogin] = useState(null);
 
-  const { setUser } = useMyContext();
+  const { setUser, fetchData } = useMyContext();
 
   const [isConnected, setIsConnected] = useState(true);
 
@@ -27,6 +27,10 @@ const Index = ({ navigation }) => {
 
   useEffect(() => {
     verifyConnection();
+    const intervalId = setInterval(() => {
+      verifyConnection();
+    }, 2000);
+    return () => clearInterval(intervalId);
   }, []);
 
   const loginUser = ({ id, nombre, placa, ruta, tipo }) => {
@@ -94,6 +98,7 @@ const Index = ({ navigation }) => {
 
             loginUser(user);
             setUser(user);
+            fetchData();
           }
         })
         .catch((error) => {

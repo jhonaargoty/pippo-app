@@ -2,19 +2,15 @@
 /* eslint-disable no-undef */
 import React, { useState, useEffect } from "react";
 
-import { View, ImageBackground, Image, ActivityIndicator } from "react-native";
-import { Text, Card, Slider, LinearProgress, Button } from "@rneui/themed";
+import { View, ActivityIndicator } from "react-native";
+import { Text, Card, Slider } from "@rneui/themed";
 import IconF from "react-native-vector-icons/FontAwesome5";
 import { Icon } from "react-native-elements";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useMyContext } from "../../../context";
 
-import {
-  fetchSaveRutaActual,
-  fectDeletesession,
-  borrarData,
-} from "../../../context_const";
+import { fetchSaveRutaActual } from "../../../context_const";
 
 import moment from "moment";
 import "moment/locale/es";
@@ -41,26 +37,17 @@ const Index = ({ navigation }) => {
     setRutaActual,
     rutaActual,
     listRecoleccionesLOCAL,
-    listConductores,
     sync,
     setSync,
     syncMessage,
     syncLoading,
     recoleccionesCreadas,
     setRecoleccionesCreadas,
-    setUser,
   } = useMyContext();
 
   const [toggleOverlay, setToggleOverlay] = useState(false);
   const [percentage, setPercentage] = useState(0);
   const [finalizarRuta, setFinalizarRuta] = useState(false);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    setTimeout(() => {
-      setLoading(false);
-    }, 1000);
-  }, []);
 
   function getPercent() {
     const totalElements = listGanaderos?.filter(
@@ -120,17 +107,17 @@ const Index = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {loading ? (
+      {syncLoading ? (
         <View style={styles.loading}>
           <ActivityIndicator size="large" color="#c90000" />
-          <Text style={styles.text_loading}>Cargando datos...</Text>
+          <Text style={styles.text_loading}>Sincronizando datos...</Text>
         </View>
       ) : (
         <>
           <Header navigation={navigation} />
 
           <View style={styles.flex}>
-            {user?.tipo === 1 && (
+            {parseInt(user?.tipo) === 1 && (
               <>
                 <Card containerStyle={styles.card_standar}>
                   <View style={styles.card_route}>
@@ -175,11 +162,7 @@ const Index = ({ navigation }) => {
                 <UltimasRecolecciones
                   listRecoleccionesLOCAL={listRecoleccionesLOCAL}
                   listGanaderos={listGanaderos}
-                  listConductores={listConductores}
-                  user={user}
                   navigation={navigation}
-                  rutaActual={rutaActual}
-                  listRutas={listRutas}
                 />
                 <FinalizarRuta
                   finalizarRuta={finalizarRuta}
@@ -207,7 +190,7 @@ const Index = ({ navigation }) => {
               </>
             )}
 
-            {(user?.tipo === 2 || user?.tipo === 3) && (
+            {(parseInt(user?.tipo) === 2 || parseInt(user?.tipo) === 3) && (
               <AnalisisRutas navigation={navigation} />
             )}
 
@@ -219,7 +202,6 @@ const Index = ({ navigation }) => {
           </View>
         </>
       )}
-      {syncLoading && <LinearProgress style={styles.bottomView} color="red" />}
     </SafeAreaView>
   );
 };

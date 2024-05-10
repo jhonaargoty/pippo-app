@@ -76,7 +76,7 @@ export const styles = StyleSheet.create({
     gap: 50,
     width: "80%",
   },
-  last_title_name: { fontSize: 14 },
+  last_title_name: { fontSize: 14, textTransform: "capitalize" },
   name_style: { textTransform: "capitalize" },
   not_data: {
     width: "100%",

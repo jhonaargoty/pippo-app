@@ -4,7 +4,7 @@ import axios from "axios";
 import NetInfo from "@react-native-community/netinfo";
 import moment from "moment-timezone";
 import { BASE_URL } from "./src/constants";
-import Geolocation from "@react-native-community/geolocation";
+import Geolocation from "react-native-geolocation-service";
 import { PermissionsAndroid } from "react-native";
 import {
   fetchSaveGanaderos,
@@ -46,10 +46,8 @@ const MyContextProvider = ({ children }) => {
   const [hasLocationPermission, setHasLocationPermission] = useState(false);
   const [isGPSEnabled, setIsGPSEnabled] = useState(false);
 
-  console.log("user", user);
-
   useEffect(() => {
-    if (user?.tipo === 1) {
+    if (parseInt(user?.tipo) === 1) {
       const checkPermissionsAndGPS = async () => {
         const permission = await PermissionsAndroid.check(
           PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
@@ -79,7 +77,7 @@ const MyContextProvider = ({ children }) => {
 
   useEffect(() => {
     const getLocation = async () => {
-      const permission = await checkLocationPermission();
+      const permission = true;
       setHasLocationPermission(permission);
       if (permission) {
         Geolocation.getCurrentPosition(
@@ -89,13 +87,22 @@ const MyContextProvider = ({ children }) => {
               longitude: position.coords.longitude,
             });
           },
-          (error) => alert(error.message),
-          { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000 }
+          (error) => {
+            console.log(error.code, error.message);
+            setGPSUser(false);
+          },
+          { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
         );
       }
     };
 
-    getLocation();
+    const intervalId = setInterval(() => {
+      getLocation();
+    }, 2000);
+
+    return () => {
+      clearInterval(intervalId);
+    };
   }, []);
 
   const verifyConnection = () => {
@@ -153,7 +160,7 @@ const MyContextProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
-    if (user && user?.tipo === 1) {
+    if (user && parseInt(user?.tipo) === 1) {
       const loadData = async () => {
         await fetchGetConductores(setListConductores);
         await fetchGetGanaderos(setListGanaderos);
@@ -164,7 +171,7 @@ const MyContextProvider = ({ children }) => {
       createDBRutaActiva();
       fetchGetRutaActiva(setRutaActiva);
       fectGetRecolecciones(setListRecoleccionesLOCAL);
-    } else if (user && user?.tipo === 2) {
+    } else if (user && parseInt(user?.tipo) === 2) {
       fetchData();
     }
   }, [user]);
@@ -182,8 +189,6 @@ const MyContextProvider = ({ children }) => {
 
   const crearRecoleccion = async () => {
     const url = await `${BASE_URL}/recolecciones/addRecoleccionAll.php`;
-
-    console.log("listRecoleccionesLOCAL", listRecoleccionesLOCAL);
 
     try {
       const response = await axios.post(url, listRecoleccionesLOCAL);
