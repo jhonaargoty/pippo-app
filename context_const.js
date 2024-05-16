@@ -287,7 +287,6 @@ export const fectGetRecolecciones = async (setListRecoleccionesLOCAL) => {
             let row = results.rows.item(i);
             data.push(row);
           }
-          /*  console.log("data recolecciones", data); */
           setListRecoleccionesLOCAL(data);
         } else {
           console.log("No data found recolecciones");

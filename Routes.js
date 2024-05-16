@@ -20,7 +20,7 @@ import { styles } from "./styles";
 const Stack = createNativeStackNavigator();
 
 function App() {
-  const { user, hasLocationPermission, isGPSEnabled } = useMyContext();
+  const { hasLocationPermission, isGPSEnabled } = useMyContext();
 
   const optionsScreens = {
     headerShown: false,
@@ -59,9 +59,7 @@ function App() {
       {renderPermissionMessage()}
       {hasLocationPermission && isGPSEnabled && (
         <NavigationContainer>
-          <Stack.Navigator
-            initialRouteName={user?.nombre || user?.usuario ? "Home" : "Login"}
-          >
+          <Stack.Navigator initialRouteName={"Login"}>
             <Stack.Screen
               name="Login"
               component={Login}

@@ -28,7 +28,7 @@ function Index({ navigation }) {
               </Text>
               <View style={styles.user_off}>
                 <Text h4 style={styles.text_header}>
-                  {user?.nombre || user?.usuario?.toUpperCase()}
+                  {user?.nombre || user?.usuario}
                 </Text>
                 <Button
                   icon={<IconF name="power-off" size={15} color={"red"} />}

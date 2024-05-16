@@ -3,7 +3,7 @@ import { StyleSheet, View, Image, Keyboard } from "react-native";
 import { Button, Text, Input, LinearProgress } from "@rneui/themed";
 import Icon from "react-native-vector-icons/FontAwesome5";
 import axios from "axios";
-import NetInfo from "@react-native-community/netinfo";
+
 import { usuariosLOCAL, conductoresLOCAL } from "../../utils/data";
 import { BASE_URL } from "../../constants";
 import { useMyContext } from "../../../context";
@@ -15,22 +15,12 @@ const Index = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
   const [errorLogin, setErrorlogin] = useState(null);
 
-  const { setUser, fetchData } = useMyContext();
-
-  const [isConnected, setIsConnected] = useState(true);
-
-  const verifyConnection = () => {
-    NetInfo.addEventListener((state) => {
-      setIsConnected(state.isConnected);
-    });
-  };
+  const { setUser, user } = useMyContext();
 
   useEffect(() => {
-    verifyConnection();
-    const intervalId = setInterval(() => {
-      verifyConnection();
-    }, 2000);
-    return () => clearInterval(intervalId);
+    if (user) {
+      navigation.navigate("Home");
+    }
   }, []);
 
   const loginUser = ({ id, nombre, placa, ruta, tipo }) => {
@@ -79,32 +69,9 @@ const Index = ({ navigation }) => {
     const url = `${BASE_URL}/login/login.php`;
     setLoading(true);
 
-    if (isConnected) {
-      await axios
-        .post(url, {
-          user: inUser,
-          password,
-        })
-        .then((response) => {
-          console.log("response", response?.data);
-          if (response?.status === 200) {
-            const user = {
-              id: response?.data?.id,
-              nombre: response?.data?.nombre || response?.data?.usuario,
-              placa: response?.data?.placa,
-              ruta: response?.data?.ruta,
-              tipo: parseInt(response?.data?.tipo),
-            };
+    const existUserLocal = usuariosLOCAL.find((u) => u.usuario === inUser);
 
-            loginUser(user);
-            setUser(user);
-            fetchData();
-          }
-        })
-        .catch((error) => {
-          setErrorlogin(true);
-        });
-    } else {
+    if (existUserLocal) {
       const usuarioTemp = usuariosLOCAL.find(
         (u) => u.usuario === inUser && u.password === password
       );
@@ -135,6 +102,29 @@ const Index = ({ navigation }) => {
       } else {
         setErrorlogin(true);
       }
+    } else {
+      await axios
+        .post(url, {
+          user: inUser,
+          password,
+        })
+        .then((response) => {
+          if (response?.status === 200) {
+            const user = {
+              id: response?.data?.id,
+              nombre: response?.data?.nombre || response?.data?.usuario,
+              placa: response?.data?.placa,
+              ruta: response?.data?.ruta,
+              tipo: parseInt(response?.data?.tipo),
+            };
+
+            loginUser(user);
+            setUser(user);
+          }
+        })
+        .catch((error) => {
+          setErrorlogin(true);
+        });
     }
 
     setLoading(false);

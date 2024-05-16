@@ -105,6 +105,8 @@ const Index = ({ navigation }) => {
     );
   };
 
+  const ANALISIS_PERMISSIONS = [2, 3, 4];
+
   return (
     <SafeAreaView style={styles.container}>
       {syncLoading ? (
@@ -190,7 +192,7 @@ const Index = ({ navigation }) => {
               </>
             )}
 
-            {(parseInt(user?.tipo) === 2 || parseInt(user?.tipo) === 3) && (
+            {ANALISIS_PERMISSIONS.includes(parseInt(user?.tipo)) && (
               <AnalisisRutas navigation={navigation} />
             )}
 

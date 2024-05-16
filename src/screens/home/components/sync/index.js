@@ -2,18 +2,9 @@ import React from "react";
 import { Text, Overlay, Button } from "@rneui/themed";
 import { View } from "react-native";
 
-import { useMyContext } from "../../../../../context";
-
-import {
-  fetchSaveRutaActiva,
-  fectDeleteRecolecciones,
-} from "../../../../../context_const";
-
 import { styles } from "../../styles";
 
 function Index({ visible, close, message }) {
-  const {} = useMyContext();
-
   return (
     <Overlay isVisible={visible} overlayStyle={styles.overlay_finish}>
       <View style={styles.title_overlay_finish}>

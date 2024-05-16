@@ -15,11 +15,9 @@ import {
   fetchSaveRutas,
   fetchGetRutas,
   fetchSaveRutaActual,
-  fetchGetRutaActual,
   fetchGetUSer,
   fetchSaveRutaActiva,
   fetchGetRutaActiva,
-  fectDeleteRecolecciones,
   createDBRutaActiva,
 } from "./context_const";
 
@@ -211,7 +209,9 @@ const MyContextProvider = ({ children }) => {
 
   const fetchRoutesByDate = async (date) => {
     const formattedDate = moment(date).format("YYYY-MM-DD");
+
     setLoadRecoleccionesByFecha(true);
+
     try {
       const recolecciones = await axios.get(
         `${BASE_URL}recolecciones_ruta/getRecoleccionesRutaByDate.php?fecha=${formattedDate}`

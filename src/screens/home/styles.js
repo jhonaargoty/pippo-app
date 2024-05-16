@@ -1,14 +1,64 @@
 import { StyleSheet } from "react-native";
 
 export const styles = StyleSheet.create({
+  field_label_ok: { color: "green", fontWeight: "bold", fontSize: 20 },
+  modal_buttons: { flexDirection: "row", gap: 10, justifyContent: "center" },
+  field_label: {
+    fontWeight: "bold",
+    width: 80,
+    textAlign: "right",
+  },
+  field: { flexDirection: "row", alignItems: "center", gap: 10 },
+  modal_content: {
+    flexDirection: "column",
+    gap: 20,
+    alignItems: "center",
+  },
+  modal_update: {
+    flexDirection: "column",
+    justifyContent: "space-between",
+    gap: 20,
+    width: "80%",
+  },
+  modal_header: {
+    borderBottomWidth: 1,
+    borderBottomColor: "lightgray",
+    paddingVertical: 10,
+    paddingHorizontal: 0,
+  },
+  modal_text_header: {
+    fontSize: 15,
+    textAlign: "center",
+    fontWeight: "bold",
+    textTransform: "uppercase",
+  },
+  ruta_modal: { fontWeight: "bold", textTransform: "capitalize" },
+  input_update_litros: {
+    width: 150,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderWidth: 0.5,
+    borderRadius: 5,
+    textAlign: "right",
+  },
+
+  flat_list: {
+    marginBottom: 180,
+  },
   user_off: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     alignContent: "center",
   },
-  date_container: {
+  calendar_arrow: {
     flexDirection: "row",
+    display: "flex",
+    gap: 10,
+    backgroundColor: "transparent",
+  },
+  date_container: {
+    flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -143,7 +193,7 @@ export const styles = StyleSheet.create({
     width: "100%",
     flexDirection: "row",
   },
-  text_header: { color: "black" },
+  text_header: { color: "black", textTransform: "capitalize" },
   date: { textTransform: "capitalize", color: "black" },
   last: { marginTop: 20, height: 500 },
   overlay: { padding: 20, width: "90%", height: "50%", borderRadius: 20 },
